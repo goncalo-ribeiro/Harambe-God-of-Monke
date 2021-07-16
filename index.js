@@ -203,6 +203,38 @@ async function passbanana(){
     }
 }
 
+async function finishheroff(memberId){   
+    console.log('finishheroff start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/finishheroff.mp3', { volume: 0.5 });
+        
+                dispatcher.on('start', () => {
+                    console.log('finishheroff.webm is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('finishheroff.webm has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('OUUUHHH');
+            }
+        }
+        return('THATS WHAT SHE SAID, NOW GET NO VOICE MA\'AM')    
+    } catch (error) {
+        console.log('catch error');
+        return('THATS WHAT SHE SAID, NOW GET NO VOICE MA\'AM')
+    }
+}
+
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
     console.log('on INTERACTION_CREATE');
@@ -291,6 +323,20 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+
+    if (interaction.data.name === 'finishheroff'){
+        finishheroff().then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
 })
 
 //regista slash commands
@@ -320,7 +366,11 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'passbanana',
         description: 'spread the love within your server'
-    }})  
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'finishheroff',
+        description: 'when you die while finishing her off'
+    }})
 
     //package
     /*
