@@ -212,14 +212,14 @@ async function finishheroff(memberId){
             if (voiceChannel) {
                 const connection = await voiceChannel.join();
                 // Create a dispatcher
-                const dispatcher = connection.play('audio/finishheroff.mp3', { volume: 0.5 });
+                const dispatcher = connection.play('audio/finishheroff.mp3', { volume: 1.6 });
         
                 dispatcher.on('start', () => {
-                    console.log('finishheroff.webm is now playing!');
+                    console.log('finishheroff.mp3 is now playing!');
                 });
         
                 dispatcher.on('finish', () => {
-                    console.log('finishheroff.webm has finished playing!');
+                    console.log('finishheroff.mp3 has finished playing!');
                     connection.disconnect();
                 });
         
@@ -228,10 +228,10 @@ async function finishheroff(memberId){
                 return('OUUUHHH');
             }
         }
-        return('THATS WHAT SHE SAID, NOW GET NO VOICE MA\'AM')    
+        return('THATS WHAT SHE SAID, NOW GET NO VOICE MA\'AM');
     } catch (error) {
         console.log('catch error');
-        return('THATS WHAT SHE SAID, NOW GET NO VOICE MA\'AM')
+        return('THATS WHAT SHE SAID, NOW GET NO VOICE MA\'AM');
     }
 }
 
@@ -325,7 +325,8 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
     }
 
     if (interaction.data.name === 'finishheroff'){
-        finishheroff().then( (resposta) => {
+        let interactionUserId = interaction.member.user.id;
+        finishheroff(interactionUserId).then( (resposta) => {
             console.log('resposta', resposta)
 
             client.api.interactions(interaction.id, interaction.token).callback.post({data: {
@@ -369,7 +370,7 @@ function registerSlashCommands(){
     }})
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'finishheroff',
-        description: 'when you die while finishing her off'
+        description: 'sponsored by Marcode'
     }})
 
     //package
