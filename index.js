@@ -4,8 +4,8 @@ const { Slash } = require('discord-slash-commands');
 const slash = new Slash(client);
 
 var auth = require('./auth.json');
-//var guildId = auth.nvideaID;
-var guildId = auth.tarasManiasID;
+var guildId = auth.nvideaID;
+//var guildId = auth.tarasManiasID;
 
 client.once('ready', () => {
 	console.log('Ready!');
