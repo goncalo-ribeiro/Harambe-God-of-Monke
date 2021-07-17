@@ -4,8 +4,8 @@ const { Slash } = require('discord-slash-commands');
 const slash = new Slash(client);
 
 var auth = require('./auth.json');
-//var guildId = auth.nvideaID;
-var guildId = auth.tarasManiasID;
+var guildId = auth.nvideaID;
+//var guildId = auth.tarasManiasID;
 
 client.once('ready', () => {
 	console.log('Ready!');
@@ -16,10 +16,10 @@ client.login(auth.token);
 client.on('ready', function (evt) {
     client.user.setPresence({ activity: { name: 'over Monke Heaven', type:"WATCHING" }, status: 'online' })
 
-    
+    /*
     client.api.applications(client.user.id).guilds(guildId).commands.get().then(data => {
         console.log(data)
-    });
+    });*/
     //client.api.applications(client.user.id).guilds(guildId).commands('866051584492699659').delete()
     registerSlashCommands();
 });
@@ -281,7 +281,7 @@ async function praisethelord(memberId){
             if (voiceChannel) {
                 const connection = await voiceChannel.join();
                 // Create a dispatcher
-                const dispatcher = connection.play('audio/angelvoice.mp3', { volume: 1.6 });
+                const dispatcher = connection.play('audio/angelvoice.mp3', { volume: 0.8 });
 
                 dispatcher.on('start', () => {
                     console.log('angelvoice.mp3 is now playing!');
