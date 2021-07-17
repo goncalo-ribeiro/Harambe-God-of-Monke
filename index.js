@@ -4,8 +4,8 @@ const { Slash } = require('discord-slash-commands');
 const slash = new Slash(client);
 
 var auth = require('./auth.json');
-var guildId = auth.nvideaID;
-//var guildId = auth.tarasManiasID;
+//var guildId = auth.nvideaID;
+var guildId = auth.tarasManiasID;
 
 client.once('ready', () => {
 	console.log('Ready!');
@@ -16,6 +16,11 @@ client.login(auth.token);
 client.on('ready', function (evt) {
     client.user.setPresence({ activity: { name: 'over Monke Heaven', type:"WATCHING" }, status: 'online' })
 
+    
+    client.api.applications(client.user.id).guilds(guildId).commands.get().then(data => {
+        console.log(data)
+    });
+    //client.api.applications(client.user.id).guilds(guildId).commands('866051584492699659').delete()
     registerSlashCommands();
 });
 
@@ -267,9 +272,43 @@ async function monke(memberId){
     }
 }
 
+async function praisethelord(memberId){   
+    console.log('praisethelord start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/angelvoice.mp3', { volume: 1.6 });
+
+                dispatcher.on('start', () => {
+                    console.log('angelvoice.mp3 is now playing!');
+                });
+
+                dispatcher.on('finish', () => {
+                    console.log('angelvoice.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('LET\'S ALL HEAR THE PREACH SPEAK');
+            }
+        }
+        return('U ARE AN UNFAITHFUL ONE');
+    } catch (error) {
+        console.log('catch error');
+        return('U ARE AN UNFAITHFUL ONE');
+    }
+}
+
+
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
     console.log('on INTERACTION_CREATE');
+    console.log(interaction)
     if (interaction.data.name === 'kekeres'){
         let interactionUserId = interaction.member.user.id;
         kekeres(interactionUserId).then( (resposta) => {
@@ -356,20 +395,6 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
-    if (interaction.data.name === 'finishheroff'){
-        let interactionUserId = interaction.member.user.id;
-        finishheroff(interactionUserId).then( (resposta) => {
-            console.log('resposta', resposta)
-
-            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
-                type: 4,
-                data: {
-                  content: resposta
-                }
-            }})
-        })
-        return;
-    }
     if (interaction.data.name === 'monke'){
         let interactionUserId = interaction.member.user.id;
         monke(interactionUserId).then( (resposta) => {
@@ -383,6 +408,38 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
             }})
         })
         return;
+    }
+
+    if (interaction.data.name === 'marcode'){
+        console.log(interaction.data.options[0].name)
+        if(interaction.data.options[0].name === 'finishheroff'){
+            let interactionUserId = interaction.member.user.id;
+            finishheroff(interactionUserId).then( (resposta) => {
+                console.log('resposta', resposta)
+    
+                client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                    type: 4,
+                    data: {
+                      content: resposta
+                    }
+                }})
+            })
+            return;
+        }
+        if (interaction.data.options[0].name === 'praisethelord'){
+            let interactionUserId = interaction.member.user.id;
+            praisethelord(interactionUserId).then( (resposta) => {
+                console.log('resposta', resposta)
+    
+                client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                    type: 4,
+                    data: {
+                      content: resposta
+                    }
+                }})
+            })
+            return;
+        }
     }
 })
 
@@ -406,10 +463,12 @@ function registerSlashCommands(){
         name: 'dc',
         description: 'break in case of emergency'
     }})
+    /*
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'finishheroff',
         description: 'sponsored by Marcode'
     }})
+    */
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'kekeres',
         description: 'kekeres crl?'
@@ -422,32 +481,34 @@ function registerSlashCommands(){
         name: 'passbanana',
         description: 'spread the love within your server'
     }})
-
-    //package
-    /*
-    slash.command({
-        guildOnly: true,
-        guildID: guildId,
-        data: {
-            name: "ping",
-            description: "Ping pong?",
-            type: 4,
-            content: `Pong! \`${client.ws.ping}ms\``
-        }
-    })
-    slash.command({
-        guildOnly: true,
-        guildID: guildId,
-        ephemeral: true,
-        data: {
-            name: "ephemeral",
-            description: "Send an ephemeral message",
-            type: 4,
-            content: `Hey!`
-        }
-    })*/
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'marcode',
+        description: 'comandos sponsored pelo progamationer do server',
+        options: [
+            {
+                name: 'finishheroff',
+                description: 'when you die while finishing her off',
+                type: '1'
+            },
+            {
+                name: 'praisethelord',
+                description: 'for all thoose mans of culture',
+                type: '1'
+            }
+        ]
+    }})
 }
 
+async function kick(){
+    shouldWeKickMe=Math.floor(Math.random() * (1 - 10 + 1)) + 1
+    if (shouldWeKickMe < 0){
+        var voiceStates =  client.guilds.cache.get(guildId).voiceStates.cache.get('351728755061817347');
+
+        console.log("I got kicked")
+    }else{
+        praisethelord();
+    }
+}
 
 const getApp =(guildId) => {
     const app = client.api.applications(client.user.id)
