@@ -79,17 +79,23 @@ async function kekeres(memberId){
 async function dc(){   
     console.log('dc start')
     try {
-        var voiceStates =  client.guilds.cache.get(guildId).voiceStates.cache.get('351728755061817347');
-        //console.log(voiceStates)
-        if(voiceStates){
-            console.log('muted?', voiceStates.serverMute)
-            if(voiceStates.serverMute){
-                await voiceStates.setMute(false);
-                return('Ameaça desneutralizada 😳')
+        VoiceChannel.members.forEach(function(guildMember, guildMemberId) {
+            var voiceStates =  client.guilds.cache.get(guildId).voiceStates.cache.get(guildMemberId);
+            if (!(guildMemberId == '351728755061817347')){
+                if(voiceStates){
+                    console.log('muted?', voiceStates.serverMute)
+                    if(voiceStates.serverMute){
+                        await voiceStates.setMute(false);
+                        return('Ameaça desneutralizada 😳')
+                    }
+                    await voiceStates.setMute(true);
+                    kick();
+                    return('Ameaça neutralizada 👌')
+                }    
             }
-            await voiceStates.setMute(true);
-            return('Ameaça neutralizada 👌')
-        }
+            Channel.send("<@" + guildMemberId + ">");
+         })
+
         return('O Harambe não detetou nenhum caso urgente')
     } catch (error) {
         //console.log(error)
@@ -235,6 +241,38 @@ async function finishheroff(memberId){
     }
 }
 
+async function praisethelord(memberId){   
+    console.log('praisethelord start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/angelvoice.mp3', { volume: 1.6 });
+        
+                dispatcher.on('start', () => {
+                    console.log('angelvoice.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('angelvoice.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('LET\'S ALL HEAR THE PREACH SPEAK');
+            }
+        }
+        return('U ARE AN UNFAITHFUL ONE');
+    } catch (error) {
+        console.log('catch error');
+        return('U ARE AN UNFAITHFUL ONE');
+    }
+}
+
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
     console.log('on INTERACTION_CREATE');
@@ -338,6 +376,21 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+
+    if (interaction.data.name === 'praisethelord'){
+        let interactionUserId = interaction.member.user.id;
+        finishheroff(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
 })
 
 //regista slash commands
@@ -372,6 +425,10 @@ function registerSlashCommands(){
         name: 'finishheroff',
         description: 'sponsored by Marcode'
     }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'praisethelord',
+        description: 'for all thoose mans of culture'
+    }})
 
     //package
     /*
@@ -398,6 +455,16 @@ function registerSlashCommands(){
     })*/
 }
 
+async function kick(){
+    shouldWeKickMe=Math.floor(Math.random() * (1 - 10 + 1)) + 1
+    if (shouldWeKickMe < 0){
+        var voiceStates =  client.guilds.cache.get(guildId).voiceStates.cache.get('351728755061817347');
+        
+        console.log("I got kicked")
+    }else{
+        praisethelord();
+    }
+}
 
 const getApp =(guildId) => {
     const app = client.api.applications(client.user.id)
