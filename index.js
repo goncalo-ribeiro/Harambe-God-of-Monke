@@ -411,8 +411,8 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
     }
 
     if (interaction.data.name === 'marcode'){
-        console.log(interaction.data.options[0].name)
-        if(interaction.data.options[0].name === 'finishheroff'){
+        console.log(interaction.data.options[0])
+        if(interaction.data.options[0].value === 'finishheroff'){
             let interactionUserId = interaction.member.user.id;
             finishheroff(interactionUserId).then( (resposta) => {
                 console.log('resposta', resposta)
@@ -426,7 +426,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
             })
             return;
         }
-        if (interaction.data.options[0].name === 'praisethelord'){
+        if (interaction.data.options[0].value === 'praisethelord'){
             let interactionUserId = interaction.member.user.id;
             praisethelord(interactionUserId).then( (resposta) => {
                 console.log('resposta', resposta)
@@ -486,14 +486,20 @@ function registerSlashCommands(){
         description: 'comandos sponsored pelo progamationer do server',
         options: [
             {
-                name: 'finishheroff',
-                description: 'when you die while finishing her off',
-                type: '1'
-            },
-            {
-                name: 'praisethelord',
-                description: 'for all thoose mans of culture',
-                type: '1'
+                "name": "comando",
+                "description": "comando altes besta",
+                "type": 3,
+                "required": true,
+                "choices": [
+                    {
+                        "name": "finishheroff",
+                        "value": "finishheroff"
+                    },
+                    {
+                        "name": "praisethelord",
+                        "value": "praisethelord"
+                    },
+                ]
             }
         ]
     }})
