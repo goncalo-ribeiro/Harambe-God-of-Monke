@@ -235,6 +235,38 @@ async function finishheroff(memberId){
     }
 }
 
+async function monke(memberId){   
+    console.log('monke start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/monke.mp3', { volume: 0.8 });
+        
+                dispatcher.on('start', () => {
+                    console.log('monke.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('monke.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('Harambe smiles at you, proud of your first step in the journey to embrace monke');
+            }
+        }
+        return('Harambe smiles at you, proud of your first step in the journey to embrace monke\nhttps://cdn.discordapp.com/attachments/634432612794105866/865981971909574716/monke.mp4');
+    } catch (error) {
+        console.log('catch error');
+        return('Harambe smiles at you, proud of your first step in the journey to embrace monke\nhttps://cdn.discordapp.com/attachments/634432612794105866/865981971909574716/monke.mp4');
+    }
+}
+
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
     console.log('on INTERACTION_CREATE');
@@ -338,6 +370,20 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+    if (interaction.data.name === 'monke'){
+        let interactionUserId = interaction.member.user.id;
+        monke(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
 })
 
 //regista slash commands
@@ -361,16 +407,20 @@ function registerSlashCommands(){
         description: 'break in case of emergency'
     }})
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'finishheroff',
+        description: 'sponsored by Marcode'
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'kekeres',
         description: 'kekeres crl?'
     }})
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
-        name: 'passbanana',
-        description: 'spread the love within your server'
+        name: 'monke',
+        description: 'reject humanity, embrace monke'
     }})
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
-        name: 'finishheroff',
-        description: 'sponsored by Marcode'
+        name: 'passbanana',
+        description: 'spread the love within your server'
     }})
 
     //package
