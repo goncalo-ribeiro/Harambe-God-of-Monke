@@ -198,6 +198,38 @@ async function caburro(memberId){
     }
 }
 
+async function coco(memberId){   
+    console.log('coco start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/coco.mp3', { volume: 1.2 });
+        
+                dispatcher.on('start', () => {
+                    console.log('coco.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('coco.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('calhou cocô 💩');
+            }
+        }
+        return('https://cdn.discordapp.com/attachments/634432612794105866/870965316069511238/coco.mp4');
+    } catch (error) {
+        console.log('catch error');
+        return('https://cdn.discordapp.com/attachments/634432612794105866/870965316069511238/coco.mp4');
+    }
+}
+
 async function passbanana(){   
     console.log('passbanana start')
     try {
@@ -395,6 +427,21 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'coco'){
+        let interactionUserId = interaction.member.user.id;
+        coco(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
     if (interaction.data.name === 'monke'){
         let interactionUserId = interaction.member.user.id;
         monke(interactionUserId).then( (resposta) => {
@@ -454,6 +501,10 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'caburro',
         description: 'para quando alguem está a ser burro'
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'coco',
+        description: 'para quando te apetece carapaus à espanhola'
     }})  
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'commando',
