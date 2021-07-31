@@ -230,6 +230,38 @@ async function coco(memberId){
     }
 }
 
+async function toy(memberId){   
+    console.log('toy start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/toy.mp3', { volume: 1.0 });
+        
+                dispatcher.on('start', () => {
+                    console.log('toy.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('toy.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('NA CAAAAAASA DO TOOOOOOOOOOOOOOOOOOOOOOOOOY!!!');
+            }
+        }
+        return('https://cdn.discordapp.com/attachments/741306247222919218/871069156060069969/toy_jingle.mp4');
+    } catch (error) {
+        console.log('catch error');
+        return('https://cdn.discordapp.com/attachments/741306247222919218/871069156060069969/toy_jingle.mp4');
+    }
+}
+
 async function passbanana(){   
     console.log('passbanana start')
     try {
@@ -487,6 +519,22 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
             })
             return;
         }
+
+    }
+
+    if (interaction.data.name === 'toy'){
+        let interactionUserId = interaction.member.user.id;
+        toy(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
     }
 })
 
@@ -553,6 +601,10 @@ function registerSlashCommands(){
                 ]
             }
         ]
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'toy',
+        description: 'um programa de culto...'
     }})
 }
 
