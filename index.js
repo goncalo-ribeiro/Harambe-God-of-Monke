@@ -262,6 +262,38 @@ async function toy(memberId){
     }
 }
 
+async function lixo(memberId){   
+    console.log('lixo start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/lixo.mp3', { volume: 1.0 });
+        
+                dispatcher.on('start', () => {
+                    console.log('lixo.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('lixo.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('QUE LIXO!');
+            }
+        }
+        return('QUE LIXO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/874603240522657812/lixo.mp4');
+    } catch (error) {
+        console.log('catch error');
+        return('QUE LIXO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/874603240522657812/lixo.mp4');
+    }
+}
+
 async function passbanana(){   
     console.log('passbanana start')
     try {
@@ -536,6 +568,21 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+
+    if (interaction.data.name === 'lixo'){
+        let interactionUserId = interaction.member.user.id;
+        lixo(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
 })
 
 //regista slash commands
@@ -602,9 +649,15 @@ function registerSlashCommands(){
             }
         ]
     }})
+
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'toy',
         description: 'um programa de culto...'
+    }})
+
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'lixo',
+        description: 'TSF in a nutshell'
     }})
 }
 
