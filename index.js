@@ -252,7 +252,7 @@ async function toy(memberId){
         
                 // Always remember to handle errors appropriately!
                 dispatcher.on('error', console.error);
-                return('NA CAAAAAASA DO TOOOOOOOOOOOOOOOOOOOOOOOOOY!!!');
+                return('NA CAAAAAAAAAAAAAAAAAAAAASA DO TOOOOOOY!!!');
             }
         }
         return('https://cdn.discordapp.com/attachments/741306247222919218/871069156060069969/toy_jingle.mp4');
@@ -287,10 +287,74 @@ async function lixo(memberId){
                 return('QUE LIXO!');
             }
         }
-        return('QUE LIXO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/874603240522657812/lixo.mp4');
+        return('QUE LIXO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/877133208527982612/lixo.mp4');
     } catch (error) {
         console.log('catch error');
-        return('QUE LIXO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/874603240522657812/lixo.mp4');
+        return('QUE LIXO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/877133208527982612/lixo.mp4');
+    }
+}
+
+async function coffin(memberId){   
+    console.log('coffin start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/coffin.mp3', { volume: 1.0 });
+        
+                dispatcher.on('start', () => {
+                    console.log('coffin.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('coffin.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('🕺🏿🕺🏿⚰️🕺🏿🕺🏿');
+            }
+        }
+        return('🕺🏿🕺🏿⚰️🕺🏿🕺🏿\nhttps://cdn.discordapp.com/attachments/634432612794105866/877133562921484308/coffin.mp4');
+    } catch (error) {
+        console.log('catch error');
+        return('🕺🏿🕺🏿⚰️🕺🏿🕺🏿\nhttps://cdn.discordapp.com/attachments/634432612794105866/877133562921484308/coffin.mp4');
+    }
+}
+
+async function herewego(memberId){   
+    console.log('herewego start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/herewego.mp3', { volume: 1.0 });
+        
+                dispatcher.on('start', () => {
+                    console.log('herewego.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('herewego.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('HERE WE GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO!');
+            }
+        }
+        return('HERE WE GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/877133255487418368/herewego.mp4');
+    } catch (error) {
+        console.log('catch error');
+        return('HERE WE GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO!\nhttps://cdn.discordapp.com/attachments/634432612794105866/877133255487418368/herewego.mp4');
     }
 }
 
@@ -583,6 +647,36 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+
+    if (interaction.data.name === 'coffin'){
+        let interactionUserId = interaction.member.user.id;
+        coffin(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
+    if (interaction.data.name === 'herewego'){
+        let interactionUserId = interaction.member.user.id;
+        herewego(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
 })
 
 //regista slash commands
@@ -658,6 +752,16 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'lixo',
         description: 'TSF in a nutshell'
+    }})
+
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'coffin',
+        description: '🕺🏿🕺🏿⚰️🕺🏿🕺🏿'
+    }})
+
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'herewego',
+        description: '✌⭐'
     }})
 }
 
