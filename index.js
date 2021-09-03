@@ -2,10 +2,28 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const { Slash } = require('discord-slash-commands');
 const slash = new Slash(client);
+var fs = require('fs');
 
 var auth = require('./auth.json');
 var guildId = auth.nvideaID;
 //var guildId = auth.tarasManiasID;
+
+var credits = require('./credits.json');
+const { isString } = require('util');
+console.log('credits.json loaded')
+let bets = {};
+let previousBets = null, previousCredits = null;
+//checkIfGuildIsInCreditsList();
+let odds = {
+    seventyMinus: {yes: 8.0, no: 2.0},
+    seventyPlus: {yes: 2.0, no: 4.0}
+};
+
+let AAAA = [
+    'https://cdn.discordapp.com/attachments/634432612794105866/883400873819123712/AAAA.mp4',
+    'https://cdn.discordapp.com/attachments/634432612794105866/883400947760525373/AAAA.mp4',
+    'https://cdn.discordapp.com/attachments/634432612794105866/883400979142311956/AAAA.mp4'
+];
 
 client.once('ready', () => {
 	console.log('Ready!');
@@ -20,7 +38,7 @@ client.on('ready', function (evt) {
     client.api.applications(client.user.id).guilds(guildId).commands.get().then(data => {
         console.log(data)
     });*/
-    //client.api.applications(client.user.id).guilds(guildId).commands('866051584492699659').delete()
+    //client.api.applications(client.user.id).guilds(guildId).commands('881917234707066900').delete()
     registerSlashCommands();
 });
 
@@ -30,6 +48,15 @@ client.on('message', message => {
     
     if(message.author.id != client.id)
     {
+        if(message.content.includes('9gag.com')){
+            let rand = getRandomInt(0, 3)
+            console.log('rand', rand)
+            
+            joying = client.emojis.cache.find(val => val.name === "joying");
+            
+            message.channel.send(`${joying} 9gag link detected ${joying}\n` + AAAA[rand]);
+        }
+        /*
         if (message.content.substring(0, 1) == "'") {
             message.react('🐵');
 
@@ -45,7 +72,7 @@ client.on('message', message => {
                     kekeres(message.member.id);
                 break;
             }
-        }
+        }*/
     }
 });
 
@@ -358,6 +385,38 @@ async function herewego(memberId){
     }
 }
 
+async function leona(memberId){   
+    console.log('leona start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/leona.mp3', { volume: 0.5 });
+        
+                dispatcher.on('start', () => {
+                    console.log('leona.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('leona.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('Leona Detected!');
+            }
+        }
+        return('You gotta be in a voice channel1');
+    } catch (error) {
+        console.log('catch error');
+        return('You gotta be in a voice channel');
+    }
+}
+
 async function passbanana(){   
     console.log('passbanana start')
     try {
@@ -468,7 +527,7 @@ async function praisethelord(memberId){
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
     console.log('on INTERACTION_CREATE');
-    console.log(interaction)
+    //console.log(interaction)
     if (interaction.data.name === 'kekeres'){
         let interactionUserId = interaction.member.user.id;
         kekeres(interactionUserId).then( (resposta) => {
@@ -677,6 +736,80 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+
+    if (interaction.data.name === 'leona'){
+        let interactionUserId = interaction.member.user.id;
+        leona(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
+    if (interaction.data.name === 'bet'){
+        //console.log(interaction.data.options[0])
+        let interactionUserId = interaction.member.user.id;
+        let interactionUserName = interaction.member.user.username;
+        let interactionValue = null;
+        let repplyFunction = null
+
+        switch(interaction.data.options[0].name){
+            case ('yes'):
+                console.log('yes')
+                interactionValue = interaction.data.options[0].options[0].value
+                repplyFunction = betYes
+
+                break;
+            case ('no'):
+                console.log('no')
+                interactionValue = interaction.data.options[0].options[0].value
+                repplyFunction = betNo
+                break;
+            case ('odds'):
+                console.log('odds')
+                repplyFunction = betOdds
+                break;
+            case ('cancel'):
+                console.log('cancel')
+                repplyFunction = betCancel
+                break;
+            case ('result'):
+                console.log('result')
+                interactionValue = interaction.data.options[0].options
+                repplyFunction = betResult
+                break;
+            case ('status'):
+                console.log('status')
+                repplyFunction = betStatus
+                break;
+            case ('ranking'):
+                console.log('ranking')
+                repplyFunction = betRanking
+                break;
+            case ('end'):
+                console.log('end')
+                repplyFunction = betEnd
+                break;       
+        }  
+        repplyFunction(interactionUserId, interactionUserName, interactionValue).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                    content: resposta
+                }
+            }})
+        })
+        return;
+
+    }
 })
 
 //regista slash commands
@@ -763,6 +896,142 @@ function registerSlashCommands(){
         name: 'herewego',
         description: '✌⭐'
     }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'leona',
+        description: 'Bust in case of Leona'
+    }})
+    /*
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'bet',
+        description: 'welcome to the Nvidea Highstakes Casino Extravaganza',
+        options: [
+            {
+                "name": "yes",
+                "value": "yes",
+                "description": "bet that the desired unit will be pulled",
+                "type": 1,
+                "options": [
+                    {
+                        "name": "credits",
+                        "description": "specify the ammount of credits to bet (type \"all in\" to bet all of your remaining credits)",
+                        "type": 3, 
+                        "required": true,
+                    },
+                ]
+            },
+            {
+                "name": "no",
+                "value": "no",
+                "description": "bet that the desired unit will not be pulled",
+                "type": 1,
+                "options": [
+                    {
+                        "name": "credits",
+                        "description": "specify the ammount of credits to bet (type \"all in\" to bet all of your remaining credits)",
+                        "type": 3, 
+                        "required": true,
+                    },
+                ]
+            },
+            {
+                "name": "cancel",
+                "value": "cancel",
+                "description": "cancel your current bet",
+                "type": 1
+            },
+            {
+                "name": "odds",
+                "value": "odds",
+                "description": "check the bettings odds",
+                "type": 1
+            },
+            {
+                "name": "status",
+                "value": "status",
+                "description": "show the status of the current pull",
+                "type": 1
+            },
+            {
+                "name": "ranking",
+                "value": "ranking",
+                "description": "list the credits of all the users",
+                "type": 1
+            },
+            {
+                "name": "end",
+                "value": "end",
+                "description": "use this to crown the winner",
+                "type": 1
+            },
+            {
+                "name": "result",
+                "description": "set whether or not the desired unit was pulled or not",
+                "type": 1, 
+                "options": [
+                    {
+                        "name": "pulled",
+                        "description": "was the desired unit pulled?",
+                        "type": 5, 
+                        "required": true,
+                    },
+                    {
+                        "name": "70pity",
+                        "description": "was the pull made with 70+ pity (defaults to False)",
+                        "type": 5,
+                    },
+                    {
+                        "name": "pulltype",
+                        "description": "10 pull or single pull (defaults to 10 pull)",
+                        "type": 3,
+                        "choices": [
+                            {
+                                "name": "10 pull",
+                                "value": "10 pull"
+                            },
+                            {
+                                "name": "single pull",
+                                "value": "single pull"
+                            },
+                        ] 
+                    },
+                    {
+                        "name": "undo",
+                        "description": "use this to undo the latest \"/bet result\" command",
+                        "type": 5,
+                    },
+                ],/*
+                
+                "choices": [
+                    {
+                        "name": "yes",
+                        "value": "yes"
+                    },
+                    {
+                        "name": "no",
+                        "value": "no"
+                    },
+                ]
+            }
+        ]
+    }})*/
+}
+
+function checkIfGuildIsInCreditsList(){
+    if(credits.servers.some(obj => Object.keys(obj).includes(guildId))){
+        console.log("credits.servers tem o serverid: " + guildId)
+    }
+    else{
+        console.log("credits.servers não tem o serverid: " + guildId)
+        let aux = {};
+        aux[guildId] = {};
+        
+        credits.servers.push(aux)
+        console.log(credits)
+        fs.writeFile('credits.json', JSON.stringify(credits, null, 4), (err) => {});
+        console.log('server adicionado à lista de creditos')
+    }
+    bets[guildId] = {};
+    console.log('bets', bets)
 }
 
 async function kick(){
@@ -782,4 +1051,397 @@ const getApp =(guildId) => {
         app.guilds(guildId)
     }
     return app
+}
+
+async function betSignupUser(memberId, memberName, value){
+    credits[memberId] = {memberName: memberName, credits: 5000}
+    console.log(credits)
+    await fs.writeFile('credits.json', JSON.stringify(credits, null, 4), (err) => {});
+}
+
+async function betYes (memberId, memberName, input){
+    if (!credits.hasOwnProperty(memberId)){
+        await betSignupUser(memberId, memberName)
+    }
+    let bet = -1;
+    console.log(Number.isInteger(input), input > 0, input <= credits[memberId].credits)
+
+    inputAux = parseInt(input);
+    console.log(input)
+    if(inputAux != NaN && inputAux > 0 && inputAux <= credits[memberId].credits){
+        bet = inputAux;
+    }else{
+        let aux = input.trim().toLowerCase()
+        console.log('aux', aux)
+        //console.log(aux === "all in" , aux === "allin" , aux === "all-in")
+        if(aux === "all in" || aux === "allin" || aux === "all-in" || aux === "all" || aux === "a"){
+            bet = credits[memberId].credits
+        }
+    }
+
+    console.log('bet', bet)
+    
+    if(bet > -1){
+        bets[memberId] = {memberName: memberName, bet: bet, result: 'yes'}
+        console.log(bets)
+        if(bet == credits[memberId].credits){
+            poggers = client.emojis.cache.find(val => val.name === "OOOO");
+            oooo = 881978975168118784
+            return(`${poggers}  Your all in bet of ` + bet + ` credit(s) has been registered! Good luck 🎲 (YES bet) ${poggers}`) 
+        }
+        return('Your bet of ' + bet + ' credit(s) has been registered! Good luck 🎲 (YES bet)') 
+    }
+    return('Please enter a valid amount (input: ' + input + ')')    
+}
+
+async function betNo (memberId, memberName, input){
+    if (!credits.hasOwnProperty(memberId)){
+        await betSignupUser(memberId, memberName)
+    }
+    let bet = -1;
+    console.log(Number.isInteger(input), input > 0, input <= credits[memberId].credits)
+
+    inputAux = parseInt(input);
+    console.log(input)
+    if(inputAux != NaN && inputAux > 0 && inputAux <= credits[memberId].credits){
+        bet = inputAux;
+    }else{
+        let aux = input.trim().toLowerCase()
+        console.log('aux', aux)
+        //console.log(aux === "all in" , aux === "allin" , aux === "all-in")
+        if(aux === "all in" || aux === "allin" || aux === "all-in" || aux === "all" || aux === "a"){
+            bet = credits[memberId].credits
+        }
+    }
+
+    console.log('bet', bet)
+    
+    if(bet > -1){
+        bets[memberId] = {memberName: memberName, bet: bet, result: 'no'}
+        console.log(bets)
+        if(bet == credits[memberId].credits){
+            poggers = client.emojis.cache.find(val => val.name === "OOOO");
+            return(`${poggers}  Your all in bet of ` + bet + ` credit(s) has been registered! Good luck 🎲 (NO bet) ${poggers}`) 
+        }
+        return('Your bet of ' + bet + ' credit(s) has been registered! Good luck 🎲 (NO bet)') 
+    }
+    return('Please enter a valid amount (input: ' + input + ')')   
+}
+
+async function betOdds (memberId, memberName){
+    return ("Odds in case of less than 70 pity:\n```yes bet: " + odds.seventyMinus.yes + "x\nno bet: " + odds.seventyMinus.no + "x```\nOdds in case of more than 70 pity:\n```yes bet: " + odds.seventyPlus.yes + "x\nno bet: " + odds.seventyPlus.no + "x```\nOdds are multiplied by 6 in single pulls")
+}
+
+
+async function betCancel (memberId, memberName){
+    if (bets.hasOwnProperty(memberId)){
+        delete bets[memberId]
+        console.log(bets)
+        return ("Your bet has been canceled")
+    }
+    return ("You had no bet to cancel")
+}
+
+async function betResult (memberId, memberName, options){
+    //console.log(options)
+    let seventyPity = false, singlepull = false, pulled, undo = false;
+    options.forEach(option => {
+        if(option.name === 'pulled'){
+            pulled = option.value
+        }
+        if(option.name === '70pity'){
+            seventyPity = option.value
+        }
+        if(option.name === 'pulltype'){
+            singlepull = (option.value === 'single pull' ? true : false)
+        }
+        if(option.name === 'undo'){
+            undo = option.value
+        }
+    });
+    if(undo){
+        if(previousBets === null || previousCredits === null){
+            return("No previous bets recorded, impossible to undo previous ``/bet result`    ` command")
+        }
+        console.log('previousCredits', previousCredits)
+        bets = previousBets;           //clone
+        credits = previousCredits;    //clone
+        await fs.writeFile('credits.json', JSON.stringify(credits, null, 4), (err) => {});
+        previousBets = null;
+        previousCredits = null;
+        return("The last ``/bet result`` command was undone")
+    }
+    /*
+    console.log('seventyPity', seventyPity)
+    console.log('singlepull', singlepull)
+    console.log('pulled', pulled)*/
+    let yesOdd, noOdd
+
+    if (seventyPity){
+        yesOdd = odds.seventyPlus.yes
+        noOdd = odds.seventyPlus.no
+    }else{
+        yesOdd = odds.seventyMinus.yes
+        noOdd = odds.seventyMinus.no
+    }
+    if(singlepull){
+        yesOdd = yesOdd * 6
+        noOdd = noOdd * 6
+    }
+
+    //console.log("yesOdd", yesOdd)
+    //console.log("noOdd", noOdd)
+
+    stonks = client.emojis.cache.find(val => val.name === "Stonks");
+    mindblown = client.emojis.cache.find(val => val.name === "mindblown");
+    deadini = client.emojis.cache.find(val => val.name === "deadini");
+
+    previousCredits={};
+    for (let i in credits) {
+        previousCredits[i] = {};
+        for (let j in credits[i]) {
+            previousCredits[i][j] = credits[i][j];
+        }
+    }
+    previousBets={};
+    for (let i in bets) {
+        previousBets[i] = {};
+        for (let j in bets[i]) {
+            previousBets[i][j] = bets[i][j];
+        }
+    }
+    console.log('previousCredits', previousCredits)
+
+    outputStr = ""
+    if(pulled){
+        for (const bet in bets) {
+            //console.log(bets[bet])
+            if (bets[bet].result == 'yes'){ //winner, winner
+                //console.log('won')
+                if (((credits[bet].credits) - (bets[bet].bet)) === 0){ //all in
+                    outputStr = outputStr.concat(`${mindblown} ` + bets[bet].memberName + ' won his All in bet, gaining ' + bets[bet].bet * yesOdd + ' credit(s) (total of credits: ' + ((credits[bet].credits) + (bets[bet].bet * yesOdd)) + `) ${mindblown}\n`)
+                }else{
+                    outputStr = outputStr.concat(`${stonks} ` + bets[bet].memberName + ' won his bet, gaining ' + bets[bet].bet * yesOdd + ' credit(s) (total of credits: ' + ((credits[bet].credits) + (bets[bet].bet * yesOdd)) + ')\n')
+                }
+                credits[bet].credits = ((credits[bet].credits) + (bets[bet].bet * yesOdd))
+            }
+            else{                           //loser
+                //console.log('lost')
+                if (((credits[bet].credits) - (bets[bet].bet)) === 0){ //all in
+                    outputStr = outputStr.concat(`${deadini} ` + bets[bet].memberName + ' lost his All in bet, losing ' + bets[bet].bet + ' credit(s) (total of credits: ' + ((credits[bet].credits) - (bets[bet].bet) + 1) + `) ${deadini}\n`)
+                    credits[bet].credits = 1
+                }else{
+                    outputStr = outputStr.concat('💩 ' + bets[bet].memberName + ' lost his bet, losing ' + bets[bet].bet + ' credit(s) (total of credits: ' + ((credits[bet].credits) - (bets[bet].bet)) + ')\n')
+                    credits[bet].credits = ((credits[bet].credits) - (bets[bet].bet))
+                }
+            }
+        }
+    }else{
+        for (const bet in bets) {
+            //console.log(bets[bet])
+            if (bets[bet].result == 'yes'){ //loser
+                //console.log('lost')
+                if (((credits[bet].credits) - (bets[bet].bet)) === 0){ //all in
+                    outputStr = outputStr.concat(`${deadini} ` + bets[bet].memberName + ' lost his bet, losing ' + bets[bet].bet + ' credit(s) (total of credits: ' + ((credits[bet].credits) - (bets[bet].bet) + 1) + `) ${deadini}\n`)
+                    credits[bet].credits = 1
+                }else{
+                    outputStr = outputStr.concat('💩 ' + bets[bet].memberName + ' lost his bet, losing ' + bets[bet].bet + ' credit(s) (total of credits: ' + ((credits[bet].credits) - (bets[bet].bet)) + ')\n')
+                    credits[bet].credits = ((credits[bet].credits) - (bets[bet].bet))
+                }
+            }
+            else{                           //winner, winner
+                //console.log('won')
+                if (((credits[bet].credits) - (bets[bet].bet)) === 0){ //all in
+                    outputStr = outputStr.concat(`${mindblown} ` + bets[bet].memberName + ' won his All in bet, gaining ' + bets[bet].bet * noOdd + ' credit(s) (total of of credits: ' + ((credits[bet].credits) + (bets[bet].bet * noOdd)) + `) ${mindblown}\n`)
+                }else{
+                    outputStr = outputStr.concat(`${stonks} ` + bets[bet].memberName + ' won his bet, gaining ' + bets[bet].bet * noOdd + ' credit(s) (total of of credits: ' + ((credits[bet].credits) + (bets[bet].bet * noOdd)) + ')\n')
+                }
+                credits[bet].credits = ((credits[bet].credits) + (bets[bet].bet * noOdd))
+            }
+        }
+    }
+    bets = {};
+    await fs.writeFile('credits.json', JSON.stringify(credits, null, 4), (err) => {});
+
+    console.log('previousCredits', previousCredits)
+
+    outputStr = outputStr.concat('\nHere are the server\'s new rankings:\n')
+    outputStr = outputStr.concat(await betRanking(memberId, memberName));
+
+    return(outputStr)
+}
+
+async function betStatus (memberId, memberName){
+    let doubters = [], believers = []
+    for (const bet in bets) {
+        if (bets[bet].result == 'yes'){
+            believers.push(bets[bet]);
+        }
+        else{
+            doubters.push(bets[bet]);
+        }
+    }
+    //console.log(believers)
+    //console.log(doubters)
+    let auxStr = 'Believers: ' + believers.length + '\n'
+    believers.forEach(believer => {
+        auxStr = auxStr.concat('    ' + believer.memberName + ': ' + believer.bet +' credit(s)\n')
+    });
+    auxStr = auxStr.concat('Doubters: ' + doubters.length + '\n')
+    doubters.forEach(doubter => {
+        auxStr = auxStr.concat('    ' + doubter.memberName + ': ' + doubter.bet +' credit(s)\n')
+    });
+    //console.log(auxStr);
+    return auxStr
+}
+
+async function betRanking (memberId, memberName){
+    let auxArray = [];
+    for (let key in credits) {
+        if (credits.hasOwnProperty(key))
+        {
+            auxArray.push(credits[key])
+        }
+    }
+    auxArray.sort(compare)
+    console.log(auxArray);
+    let reply = "";
+    let first = true
+    
+    kingEmote = client.emojis.cache.find(val => val.name === "borryKing");
+    trashEmote = client.emojis.cache.find(val => val.name === "borryKMSwlaughter");
+
+    for (let counter = 0; counter < auxArray.length; counter++) {
+        let  creditsEntry = auxArray[counter];
+        let userCredits = creditsEntry.credits;
+
+        reply = reply.concat('#' + (counter + 1) + ' - ' + creditsEntry.memberName) // + ' with ' + userCredits + ' credit(s)')
+        
+        for (let i = counter + 1; i < auxArray.length; i++) {
+            let nextCreditsEntry = auxArray[i];
+            /*
+            console.log('counter', counter)
+            console.log('i', i)
+            console.log('creditsEntry', creditsEntry)
+            console.log('nextCreditsEntry', nextCreditsEntry)*/
+            if(nextCreditsEntry.credits === userCredits){
+                
+                if(i+1 === auxArray.length){
+                    reply = reply.concat(' and ' + nextCreditsEntry.memberName);
+                }else{
+                    if(nextCreditsEntry.credits != auxArray[i+1].credits){
+                        reply = reply.concat(' and ' + nextCreditsEntry.memberName);
+                    }
+                    else{   
+                        reply = reply.concat(', ' + nextCreditsEntry.memberName);
+                    }
+                }
+                counter++;
+            }else{
+                i = auxArray.length + 1;
+            }
+        }
+        reply = reply.concat(' with ' + userCredits + ' credit(s)')
+
+        if(first == 1){
+            reply = reply.concat(` ${kingEmote}`)
+            first = false;
+        }
+        else{
+            if(auxArray.length == counter + 1){
+                reply = reply.concat(` ${trashEmote}`)
+            }
+        }
+        reply = reply.concat('\n');
+    }
+    //console.log(reply)
+    return(reply)
+}
+
+async function betEnd (memberId, memberName){
+    if(memberId != 255093821598203914){
+        return ("Sorry " + memberName + " you can't issue this command")
+    }
+    basedEmote = client.emojis.cache.find(val => val.name === "BasedKEK");
+    let auxArray = [], finalArray = [];
+    for (let key in credits) {
+        if (credits.hasOwnProperty(key))
+        {
+            auxArray.push(credits[key])
+            auxArray[auxArray.length-1].memberId = key
+        }
+    }
+    auxArray.sort(compare)
+    console.log('auxArray',auxArray)
+    finalArray.push(auxArray[0])
+    //console.log('finalArray',finalArray)
+    for (let counter = 1; counter < auxArray.length; counter++) {
+        if(auxArray[counter].credits == finalArray[0].credits){
+            finalArray.push(auxArray[counter])
+        }
+    }
+    console.log('finalArray', finalArray);
+
+    let reply = "Congratulations"
+    for (let i = 0; i < finalArray.length; i++) {
+        let winner = finalArray[i];
+        if(i===0){
+            reply = reply.concat(" <@" + winner.memberId + ">")
+        }
+        else{
+            if(i+1 === finalArray.length){
+                reply = reply.concat(" and <@" + winner.memberId + ">")
+            }
+            else{
+                reply = reply.concat(", <@" + winner.memberId + ">")
+            }
+        }
+    }
+    reply = (finalArray.length === 1) ? reply.concat(` you are the winner of tonight's Nvidea's Grand Casino Extravaganza ${basedEmote}`) : reply.concat(` you are the winners of tonight's Nvidea's Grand Casino Extravaganza ${basedEmote}`)
+    console.log(reply)
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/rainha.mp3', { volume: 0.8 });
+        
+                dispatcher.on('start', () => {
+                    console.log('rainha.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('rainha.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return(reply)
+            }
+        }
+        return(reply)
+    } catch (error) {
+        console.log('catch error');
+        return(reply)
+    }
+    return ("Congratulations you are the winner")
+}
+
+function compare( a, b ) {
+    if ( a.credits > b.credits ){
+      return -1;
+    }
+    if ( a.credits < b.credits ){
+      return 1;
+    }
+    return 0;
+}
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
 }
