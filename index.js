@@ -10,6 +10,7 @@ var guildId = auth.nvideaID;
 
 var credits = require('./credits.json');
 const { isString } = require('util');
+const { SSL_OP_EPHEMERAL_RSA } = require('constants');
 console.log('credits.json loaded')
 let bets = {};
 let previousBets = null, previousCredits = null;
@@ -107,6 +108,33 @@ async function kekeres(memberId){
         return('NÃO ESTÁS NUM VOICE CHAT FILHO DA PUTA! TOMA LÁ\nhttps://cdn.discordapp.com/attachments/634432612794105866/865590171189772298/kekeres.mp4')
     }
 }
+
+async function rift(interaction){   
+    console.log('rift start')
+    let teemo1 = client.emojis.cache.find(val => val.name === "Teemo1");
+    let teemo2 = client.emojis.cache.find(val => val.name === "Teemo2");
+    let teemo3 = client.emojis.cache.find(val => val.name === "Teemo3");
+    let bernhand = client.emojis.cache.find(val => val.name === "bernhand");
+            
+    await client.channels.cache.get(interaction.channel_id).send(`${teemo1}${teemo2}${teemo3}${bernhand}`)
+
+    let toxicBrosID = '796025696353779752'
+    let riftBrosID = '707697021573791876'
+    let roleID = toxicBrosID;
+
+    console.log(interaction.data.options)
+    if (interaction.data.options != undefined){
+        roleID = interaction.data.options[0].value ? riftBrosID : toxicBrosID;
+        console.log(roleID)
+    }
+    
+//    await client.channels.cache.get(interaction.channel_id).send(`${role} the Rift calls...`)
+    let role = client.guilds.cache.get(guildId).roles.cache.get(roleID);
+    console.log(role)
+    return(`${role} the Rift calls...`)
+
+}
+
 
 async function dc(){   
     console.log('dc start')
@@ -752,6 +780,22 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'rift'){
+        console.log(interaction)
+        //let interactionUserId = interaction.member.user.id;
+        rift(interaction).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
     if (interaction.data.name === 'bet'){
         //console.log(interaction.data.options[0])
         let interactionUserId = interaction.member.user.id;
@@ -899,6 +943,18 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'leona',
         description: 'Bust in case of Leona'
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'rift',
+        description: 'The Rift yearns for its tribute',
+        options: [
+            {
+                "name": "riftbros",
+                "value": "riftbros",
+                "description": "Summon all Rift Bros? (DEFAULT: FALSE)",
+                "type": 5,
+            },
+        ],
     }})
     /*
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
