@@ -116,7 +116,7 @@ async function rift(interaction){
     let teemo3 = client.emojis.cache.find(val => val.name === "Teemo3");
     let bernhand = client.emojis.cache.find(val => val.name === "bernhand");
             
-    await client.channels.cache.get(interaction.channel_id).send(`${teemo1}${teemo2}${teemo3}${bernhand}`)
+    //await client.channels.cache.get(interaction.channel_id).send(`${teemo1}${teemo2}${teemo3}${bernhand}`)
 
     let toxicBrosID = '796025696353779752'
     let riftBrosID = '707697021573791876'
@@ -130,8 +130,10 @@ async function rift(interaction){
     
 //    await client.channels.cache.get(interaction.channel_id).send(`${role} the Rift calls...`)
     let role = client.guilds.cache.get(guildId).roles.cache.get(roleID);
-    console.log(role)
-    return(`${role} the Rift calls...`)
+
+    client.channels.cache.get(interaction.channel_id).send(`${role} the Rift calls...`)
+    return(`${teemo1}${teemo2}${teemo3}${bernhand}`)
+
 
 }
 
