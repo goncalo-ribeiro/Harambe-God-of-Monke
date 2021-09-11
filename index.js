@@ -328,7 +328,7 @@ async function lixo(memberId){
             if (voiceChannel) {
                 const connection = await voiceChannel.join();
                 // Create a dispatcher
-                const dispatcher = connection.play('audio/lixo.mp3', { volume: 1.0 });
+                const dispatcher = connection.play('audio/lixo.mp3', { volume: 0.8 });
         
                 dispatcher.on('start', () => {
                     console.log('lixo.mp3 is now playing!');
