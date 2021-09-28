@@ -351,6 +351,38 @@ async function lixo(memberId){
     }
 }
 
+async function wazzaa(memberId){   
+    console.log('wazzaa start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/wazzaa.mp3', { volume: 0.8 });
+        
+                dispatcher.on('start', () => {
+                    console.log('wazzaa.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('wazzaa.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('WAZZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!');
+            }
+        }
+        return('https://tenor.com/view/whats-up-wazzup-scary-movie-scream-gif-16474707');
+    } catch (error) {
+        console.log('catch error');
+        return('https://tenor.com/view/whats-up-wazzup-scary-movie-scream-gif-16474707');
+    }
+}
+
 async function coffin(memberId){   
     console.log('coffin start')
     try {
@@ -767,6 +799,21 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'wazzaa'){
+        let interactionUserId = interaction.member.user.id;
+        wazzaa(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
     if (interaction.data.name === 'leona'){
         let interactionUserId = interaction.member.user.id;
         leona(interactionUserId).then( (resposta) => {
@@ -797,6 +844,7 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         })
         return;
     }
+
 
     if (interaction.data.name === 'bet'){
         //console.log(interaction.data.options[0])
@@ -945,6 +993,10 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'leona',
         description: 'Bust in case of Leona'
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'wazzaa',
+        description: 'wassup my ninja?'
     }})
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'rift',
