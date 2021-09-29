@@ -585,6 +585,38 @@ async function praisethelord(memberId){
     }
 }
 
+async function emocionado(memberId){   
+    console.log('emocionado start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/emocionado.mp3', { volume: 1.0 });
+        
+                dispatcher.on('start', () => {
+                    console.log('emocionado.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('emocionado.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('Que emoção, pah caraças!');
+            }
+        }
+        return('Que emoção, pah caraças!');
+    } catch (error) {
+        console.log('catch error');
+        return('Que emoção, pah caraças!');
+    }
+}
+
 
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
@@ -845,6 +877,22 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'emocionado'){
+        console.log(interaction)
+        let interactionUserId = interaction.member.user.id;
+        emocionado(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
 
     if (interaction.data.name === 'bet'){
         //console.log(interaction.data.options[0])
@@ -997,6 +1045,10 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'wazzaa',
         description: 'wassup my ninja?'
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'emocionado',
+        description: 'ouvi as palavras sábias do nuno melo'
     }})
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'rift',
