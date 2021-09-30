@@ -39,6 +39,10 @@ client.on('ready', function (evt) {
     client.api.applications(client.user.id).guilds(guildId).commands.get().then(data => {
         console.log(data)
     });*/
+
+ /*   client.api.applications(client.user.id).guilds(guildId).commands.resolve('877135653303898122').then(data => {
+        console.log(data)
+    });*/
     //client.api.applications(client.user.id).guilds(guildId).commands('881917234707066900').delete()
     registerSlashCommands();
 });
@@ -57,8 +61,8 @@ client.on('message', message => {
             
             message.channel.send(`${joying} 9gag link detected ${joying}\n` + AAAA[rand]);
         }
-        /*
-        if (message.content.substring(0, 1) == "'") {
+        
+        if (message.content.substring(0, 1) == "-") {
             message.react('🐵');
 
             var args = message.content.substring(1).split(' ');
@@ -69,16 +73,16 @@ client.on('message', message => {
             switch(cmd) {
                 case 'kekeres':
                     message.react('💥');
-                    //console.log(message.member)
+                    console.log(message.member.id)
                     kekeres(message.member.id);
                 break;
             }
-        }*/
+        }
     }
 });
 
 async function kekeres(memberId){   
-    console.log('kekeres start')
+    console.log('kekeres start', memberId)
     try {
         var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
         if(voiceStates){
@@ -104,7 +108,7 @@ async function kekeres(memberId){
         }
         return('NÃO ESTÁS NUM VOICE CHAT FILHO DA PUTA! TOMA LÁ\nhttps://cdn.discordapp.com/attachments/634432612794105866/865590171189772298/kekeres.mp4')    
     } catch (error) {
-        console.log('catch error');
+        console.log(error);
         return('NÃO ESTÁS NUM VOICE CHAT FILHO DA PUTA! TOMA LÁ\nhttps://cdn.discordapp.com/attachments/634432612794105866/865590171189772298/kekeres.mp4')
     }
 }
