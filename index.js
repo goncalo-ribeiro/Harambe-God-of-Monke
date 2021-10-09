@@ -2,15 +2,20 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const { Slash } = require('discord-slash-commands');
 const slash = new Slash(client);
+const ytdl = require('ytdl-core');
 var fs = require('fs');
+
 
 var auth = require('./auth.json');
 var guildId = auth.nvideaID;
 //var guildId = auth.tarasManiasID;
 
+var soundClips = require('./soundClips.json');
+
 var credits = require('./credits.json');
 const { isString } = require('util');
 const { SSL_OP_EPHEMERAL_RSA } = require('constants');
+const { Stream } = require('stream');
 console.log('credits.json loaded')
 let bets = {};
 let previousBets = null, previousCredits = null;
@@ -598,7 +603,7 @@ async function emocionado(memberId){
             if (voiceChannel) {
                 const connection = await voiceChannel.join();
                 // Create a dispatcher
-                const dispatcher = connection.play('audio/emocionado.mp3', { volume: 1.0 });
+                const dispatcher = connection.play('audio/emocionado.mp3', { volume: 1.5 });
         
                 dispatcher.on('start', () => {
                     console.log('emocionado.mp3 is now playing!');
@@ -618,6 +623,100 @@ async function emocionado(memberId){
     } catch (error) {
         console.log('catch error');
         return('Que emoção, pah caraças!');
+    }
+}
+
+async function hey(interaction){   
+
+    let memberId = interaction.member.user.id;
+    let memberName = interaction.member.user.username;
+    let volume = 1.0;
+    let link  = (Math.random() < 0.5) ? 'https://www.youtube.com/watch?v=u42au1R71yw' : 'https://www.youtube.com/watch?v=1JBMTcyp3hM' ;
+    let regexResult = 0;
+
+    let settingsChanged = false;
+
+    console.log('hey start', memberId, memberName)
+
+    if(soundClips[memberId] == null){
+        soundClips[memberId] = {}
+        soundClips[memberId].memberName = memberName
+        soundClips[memberId].link = link
+        soundClips[memberId].volume = volume
+        await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
+    }
+    
+    //console.log(interaction.data.options)
+    if (interaction.data.options != undefined){
+        for (let i = 0; i < interaction.data.options.length; i++) {
+            const option = interaction.data.options[i];
+            if(option.name === 'link'){
+                console.log('link = ', link)
+                let urlRegExp = /^(ftp|http|https):\/\/[^ "]+$/
+                regexResult = option.value.match(urlRegExp);
+                if(regexResult){
+                    link = option.value;
+                    soundClips[memberId].link = link
+                    settingsChanged = true;
+                }else{
+                    return('please specify a valid url');
+                }
+            }if(option.name === 'volume'){
+                console.log('volume = ', volume)
+                if((option.value >= 10) && (option.value <= 200)){
+                    volume = option.value / 100;
+                    soundClips[memberId].volume = volume
+                    settingsChanged = true;
+                }else{
+                    return('please specify a valid volume [10-200]');
+                }
+            }
+        }
+        console.log("write to file")
+        await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
+    }
+
+    let youtubeRegex = /^(?:https?:\/\/)?(?:(?:www\.)?youtube.com\/watch\?v=|youtu.be\/)(\w+)$/
+    link = soundClips[memberId].link;
+    volume = soundClips[memberId].volume;
+    regexResult = link.match(youtubeRegex)
+    console.log(regexResult)
+
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                const streamOptions = { seek: 0, volume: volume };
+                let stream;
+
+                stream = (regexResult) ?  ytdl(link, { filter : 'audioonly' }) : link;
+                console.log(stream)
+                dispatcher = connection.play(stream, streamOptions);
+
+                dispatcher.on('start', () => {
+                    console.log('hey is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('hey has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('now playing ' + memberName + '\'s custom clip at ' + volume*100 + '% volume');
+            }
+        }
+        if (interaction.data.options != undefined){
+            if(settingsChanged)
+            return('settings changed successfully');    
+        }
+        return('you must be in a voice chat to play your sound clip');
+    } catch (error) {
+        console.log(error);
+        return('chamem o rick crl, nao era suposto chegar aqui');
     }
 }
 
@@ -897,6 +996,21 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'hey'){
+        //console.log(interaction)
+        hey(interaction).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
 
     if (interaction.data.name === 'bet'){
         //console.log(interaction.data.options[0])
@@ -1054,6 +1168,24 @@ function registerSlashCommands(){
         name: 'emocionado',
         description: 'ouvi as palavras sábias do nuno melo'
     }})
+
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'hey',
+        description: 'create your own customized sound clip',
+        options: [
+            {
+                "name": "link",
+                "description": "specify your custom sound clip",
+                "type": 3,
+            },
+            {
+                "name": "volume",
+                "description": "specify your custom sound clip volume [10 - 200]% (default 100%)",
+                "type": 4,
+            },
+        ],
+    }})
+
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'rift',
         description: 'The Rift yearns for its tribute',
