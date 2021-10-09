@@ -676,7 +676,7 @@ async function hey(interaction){
         await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
     }
 
-    let youtubeRegex = /^(?:https?:\/\/)?(?:(?:www\.)?youtube.com\/watch\?v=|youtu.be\/)(\w+)$/
+    let youtubeRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/
     link = soundClips[memberId].link;
     volume = soundClips[memberId].volume;
     regexResult = link.match(youtubeRegex)
