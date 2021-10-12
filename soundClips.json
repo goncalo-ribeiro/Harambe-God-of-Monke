@@ -1,7 +1,32 @@
 {
     "255093821598203914": {
         "memberName": "rick_sanchez",
-        "link": "https://cdn.discordapp.com/attachments/434883051085103105/896347524229656586/bless.mp3",
-        "volume": 0.6
+        "link": "https://www.youtube.com/watch?v=1JBMTcyp3hM",
+        "volume": 1
+    },
+    "163738323972521984": {
+        "memberName": "Gandini",
+        "link": "https://www.youtube.com/watch?v=-uO496C6xYE",
+        "volume": 1
+    },
+    "351728755061817347": {
+        "memberName": "marcode3",
+        "link": "https://cdn.discordapp.com/attachments/741306247222919218/896411841356517416/Special_Suprise.mp3",
+        "volume": 1
+    },
+    "218742629918048256": {
+        "memberName": "xqsme",
+        "link": "https://www.youtube.com/watch?v=jah3L6VIeCI",
+        "volume": 1.5
+    },
+    "185777017147359233": {
+        "memberName": "cloro",
+        "link": "https://cdn.discordapp.com/attachments/741306247222919218/896821388537643050/SPOILER_joe_mama_short.mp3",
+        "volume": 0.7
+    },
+    "184057633257291777": {
+        "memberName": "SWarrior",
+        "link": "https://cdn.discordapp.com/attachments/741306247222919218/896822700998287370/SPOILER_final_61632cf899c08f005c132e45_145597.mp4",
+        "volume": 1
     }
 }
