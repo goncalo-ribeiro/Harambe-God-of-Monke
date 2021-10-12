@@ -632,6 +632,7 @@ async function hey(interaction){
     let memberName = interaction.member.user.username;
     let volume = 1.0;
     let link  = (Math.random() < 0.5) ? 'https://www.youtube.com/watch?v=u42au1R71yw' : 'https://www.youtube.com/watch?v=1JBMTcyp3hM' ;
+    let userWhoseClipIsGonnaBePlayed = memberId;
     let regexResult = 0;
 
     let settingsChanged = false;
@@ -648,37 +649,47 @@ async function hey(interaction){
     
     //console.log(interaction.data.options)
     if (interaction.data.options != undefined){
+
         for (let i = 0; i < interaction.data.options.length; i++) {
             const option = interaction.data.options[i];
-            if(option.name === 'link'){
-                console.log('link = ', link)
-                let urlRegExp = /^(ftp|http|https):\/\/[^ "]+$/
-                regexResult = option.value.match(urlRegExp);
-                if(regexResult){
-                    link = option.value;
-                    soundClips[memberId].link = link
-                    settingsChanged = true;
-                }else{
-                    return('please specify a valid url');
-                }
-            }if(option.name === 'volume'){
-                console.log('volume = ', volume)
-                if((option.value >= 10) && (option.value <= 200)){
-                    volume = option.value / 100;
-                    soundClips[memberId].volume = volume
-                    settingsChanged = true;
-                }else{
-                    return('please specify a valid volume [10-200]');
-                }
+            if(option.name === 'user'){
+                userWhoseClipIsGonnaBePlayed = option.value
+                console.log('userWhoseClipIsGonnaBePlayed', userWhoseClipIsGonnaBePlayed)
             }
         }
-        console.log("write to file")
-        await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
+        if(userWhoseClipIsGonnaBePlayed === memberId){
+            for (let i = 0; i < interaction.data.options.length; i++) {
+                const option = interaction.data.options[i];
+                if(option.name === 'link'){
+                    console.log('link = ', link)
+                    let urlRegExp = /^(ftp|http|https):\/\/[^ "]+$/
+                    regexResult = option.value.match(urlRegExp);
+                    if(regexResult){
+                        link = option.value;
+                        soundClips[memberId].link = link
+                        settingsChanged = true;
+                    }else{
+                        return('please specify a valid url');
+                    }
+                }if(option.name === 'volume'){
+                    console.log('volume = ', volume)
+                    if((option.value >= 10) && (option.value <= 200)){
+                        volume = option.value / 100;
+                        soundClips[memberId].volume = volume
+                        settingsChanged = true;
+                    }else{
+                        return('please specify a valid volume [10-200]');
+                    }
+                }
+            }
+            console.log("write to file")
+            await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
+        }
     }
 
     let youtubeRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/
-    link = soundClips[memberId].link;
-    volume = soundClips[memberId].volume;
+    link = soundClips[userWhoseClipIsGonnaBePlayed].link;
+    volume = soundClips[userWhoseClipIsGonnaBePlayed].volume;
     regexResult = link.match(youtubeRegex)
     console.log(regexResult)
 
@@ -706,7 +717,7 @@ async function hey(interaction){
         
                 // Always remember to handle errors appropriately!
                 dispatcher.on('error', console.error);
-                return('now playing ' + memberName + '\'s custom clip at ' + volume*100 + '% volume');
+                return('now playing ' + soundClips[userWhoseClipIsGonnaBePlayed].memberName + '\'s custom clip at ' + soundClips[userWhoseClipIsGonnaBePlayed].volume*100 + '% volume');
             }
         }
         if (interaction.data.options != undefined){
@@ -1182,6 +1193,11 @@ function registerSlashCommands(){
                 "name": "volume",
                 "description": "specify your custom sound clip volume [10 - 200]% (default 100%)",
                 "type": 4,
+            },
+            {
+                "name": "user",
+                "description": "yoink the sound clip of another user",
+                "type": 6,
             },
         ],
     }})
