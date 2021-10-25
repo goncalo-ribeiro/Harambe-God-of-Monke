@@ -10,12 +10,11 @@ var auth = require('./auth.json');
 var guildId = auth.nvideaID;
 //var guildId = auth.tarasManiasID;
 
-var soundClips = require('./soundClips.json');
+var soundClipsOld = require('./soundClips.json');
+var soundClips = require('./soundClips.mk2.json');
 
 var credits = require('./credits.json');
-const { isString } = require('util');
-const { SSL_OP_EPHEMERAL_RSA } = require('constants');
-const { Stream } = require('stream');
+
 console.log('credits.json loaded')
 let bets = {};
 let previousBets = null, previousCredits = null;
@@ -43,12 +42,17 @@ client.on('ready', function (evt) {
     /*
     client.api.applications(client.user.id).guilds(guildId).commands.get().then(data => {
         console.log(data)
-    });*/
+    });
+    */
 
- /*   client.api.applications(client.user.id).guilds(guildId).commands.resolve('877135653303898122').then(data => {
-        console.log(data)
-    });*/
-    //client.api.applications(client.user.id).guilds(guildId).commands('881917234707066900').delete()
+   /*   
+    client.api.applications(client.user.id).guilds(guildId).commands.resolve('902190034873098261').then(data => {
+       console.log(data)
+    });
+    */
+    //client.api.applications(client.user.id).guilds(guildId).commands('902190034873098261').delete()
+
+    //UNCOMMENT
     registerSlashCommands();
 });
 
@@ -639,12 +643,12 @@ async function hey(interaction){
 
     console.log('hey start', memberId, memberName)
 
-    if(soundClips[memberId] == null){
-        soundClips[memberId] = {}
-        soundClips[memberId].memberName = memberName
-        soundClips[memberId].link = link
-        soundClips[memberId].volume = volume
-        await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
+    if(soundClipsOld[memberId] == null){
+        soundClipsOld[memberId] = {}
+        soundClipsOld[memberId].memberName = memberName
+        soundClipsOld[memberId].link = link
+        soundClipsOld[memberId].volume = volume
+        await fs.writeFile('soundClips.json', JSON.stringify(soundClipsOld, null, 4), (err) => {});
     }
     
     //console.log(interaction.data.options)
@@ -666,7 +670,7 @@ async function hey(interaction){
                     regexResult = option.value.match(urlRegExp);
                     if(regexResult){
                         link = option.value;
-                        soundClips[memberId].link = link
+                        soundClipsOld[memberId].link = link
                         settingsChanged = true;
                     }else{
                         return('please specify a valid url');
@@ -675,7 +679,7 @@ async function hey(interaction){
                     console.log('volume = ', volume)
                     if((option.value >= 10) && (option.value <= 200)){
                         volume = option.value / 100;
-                        soundClips[memberId].volume = volume
+                        soundClipsOld[memberId].volume = volume
                         settingsChanged = true;
                     }else{
                         return('please specify a valid volume [10-200]');
@@ -688,8 +692,8 @@ async function hey(interaction){
     }
 
     let youtubeRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/
-    link = soundClips[userWhoseClipIsGonnaBePlayed].link;
-    volume = soundClips[userWhoseClipIsGonnaBePlayed].volume;
+    link = soundClipsOld[userWhoseClipIsGonnaBePlayed].link;
+    volume = soundClipsOld[userWhoseClipIsGonnaBePlayed].volume;
     regexResult = link.match(youtubeRegex)
     console.log(regexResult)
 
@@ -717,7 +721,7 @@ async function hey(interaction){
         
                 // Always remember to handle errors appropriately!
                 dispatcher.on('error', console.error);
-                return('now playing ' + soundClips[userWhoseClipIsGonnaBePlayed].memberName + '\'s custom clip at ' + soundClips[userWhoseClipIsGonnaBePlayed].volume*100 + '% volume');
+                return('now playing ' + soundClipsOld[userWhoseClipIsGonnaBePlayed].memberName + '\'s custom clip at ' + soundClipsOld[userWhoseClipIsGonnaBePlayed].volume*100 + '% volume');
             }
         }
         if (interaction.data.options != undefined){
@@ -731,6 +735,86 @@ async function hey(interaction){
     }
 }
 
+async function clip(interaction){
+    
+    let memberId = interaction.member.user.id;
+    let clipName = interaction.data.options[0].value
+    let volume = soundClips[clipName].volume;
+    let url  = soundClips[clipName].url;
+    let regexResult = 0;
+    console.log('now playing: ' + clipName)
+    
+    let youtubeRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/
+    regexResult = url.match(youtubeRegex)
+    console.log(regexResult)
+
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                const streamOptions = { seek: 0, volume: volume };
+                let stream;
+
+                stream = (regexResult) ?  ytdl(url, { filter : 'audioonly' }) : url;
+                console.log(stream)
+                dispatcher = connection.play(stream, streamOptions);
+
+                dispatcher.on('start', () => {
+                    console.log('clip is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('clip has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('Now playing ' + clipName + ' at ' + volume*100 + '% volume 🔊');
+            }
+        }
+        return('you must be in a voice chat to play your sound clip');
+    } catch (error) {
+        console.log(error);
+        return('chamem o rick crl, nao era suposto chegar aqui');
+    }
+}
+
+async function soundclipUpload(interaction){   
+    console.log(interaction.data.options[0].options)
+    let options = interaction.data.options[0].options;
+    
+    let clipUrl  = options.find(option => option.name === 'url').value;
+    let volume = options.find(option => option.name === 'volume') ? options.find(option => option.name === 'volume').value/100 : 1.0
+    let clipName = options.find(option => option.name === 'name').value;
+    let regexResult = 0;
+    let urlRegExp = /^(ftp|http|https):\/\/[^ "]+$/;
+    regexResult = clipUrl.match(urlRegExp);
+
+    console.log(clipUrl, clipName, volume)
+
+    if(!regexResult){
+        return('Please specify a valid url');
+    }
+
+    if(soundClips[clipName] != null){
+        return ('This server already has a clip with that name 😳')
+    }
+
+    soundClips[clipName] = {}
+    soundClips[clipName].url = clipUrl
+    soundClips[clipName].volume = volume
+    soundClips[clipName].uploader = interaction.member.user.username
+    await fs.writeFile('soundClips.mk2.json', JSON.stringify(soundClips, null, 4), (err) => {});
+
+    registerSoundClipCommands(true).then((values) => {
+        client.channels.cache.get(interaction.channel_id).send(interaction.member.user.username+ ` your soundclip has been uploaded! Feel free to use it. 👌`)
+    })
+
+    return 'Your sound clip is being processed! Please wait a few seconds before using it. ⌛';
+}
 
 //processa slash commands
 client.ws.on('INTERACTION_CREATE', async interaction => {
@@ -1022,6 +1106,54 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'clip'){
+        //console.log(interaction)
+        clip(interaction).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
+    if (interaction.data.name === 'soundclip'){
+        console.log('********************************************************************')
+        console.log(interaction.data.options)
+
+        if(interaction.data.options[0].name === 'upload'){
+            soundclipUpload(interaction).then( (resposta) => {
+                console.log('resposta', resposta)
+    
+                client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                    type: 4,
+                    data: {
+                      content: resposta
+                    }
+                }})
+            })
+        }else{
+            if(interaction.data.options[0].name === 'delete'){
+                soundclipDelete(interaction).then( (resposta) => {
+                    console.log('resposta', resposta)
+        
+                    client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                        type: 4,
+                        data: {
+                          content: resposta
+                        }
+                    }})
+                })
+            }
+        }
+
+        return;
+    }
+
 
     if (interaction.data.name === 'bet'){
         //console.log(interaction.data.options[0])
@@ -1085,7 +1217,6 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
 
 //regista slash commands
 function registerSlashCommands(){
-
     //manual
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'bless',
@@ -1180,6 +1311,7 @@ function registerSlashCommands(){
         description: 'ouvi as palavras sábias do nuno melo'
     }})
 
+    
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'hey',
         description: 'create your own customized sound clip',
@@ -1201,6 +1333,8 @@ function registerSlashCommands(){
             },
         ],
     }})
+
+    registerSoundClipCommands()
 
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'rift',
@@ -1330,6 +1464,70 @@ function registerSlashCommands(){
     }})*/
 }
 
+function registerSoundClipCommands(update = false){
+    let soundClipsChoices = getSoundClipsAsChoices()
+
+    let promise1 = client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'clip',
+        description: 'play a custom sound clip',
+        options: [
+            {
+                "name": "soundclip",
+                "description": "play a custom sound clip",
+                "type": 3,
+                "required": true,
+                "choices": soundClipsChoices,
+            }
+        ]
+    }})
+    
+    let promise2 = client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'soundclip',
+        description: 'use and manage this server\'s customizable sound clip collection',
+        options: [
+            {
+            name: "upload",
+            description: "upload a custom sound clip",
+            type: 1,
+            options: [
+                    {
+                        "name": "url",
+                        "required": true,
+                        "description": "specify your custom sound clip url",
+                        "type": 3,
+                    },
+                    {
+                        "name": "name",
+                        "required": true,
+                        "description": "specify your custom sound clip name (1-100 chars)",
+                        "type": 3,
+                    },
+                    {
+                        "name": "volume",
+                        "description": "specify your custom sound clip volume [10 - 200]% (default 100%)",
+                        "type": 4,
+                    },
+                ],
+            },
+            {
+                name: "delete",
+                description: "delete a custom sound clip",
+                type: 1,
+                options: [
+                        {
+                            "name": "soundclip",
+                            "description": "play a custom sound clip",
+                            "type": 3,
+                            "required": true,
+                            "choices": soundClipsChoices,
+                        },
+                    ],
+                },
+        ],
+    }})
+    return Promise.all([promise1, promise2])
+}
+
 function checkIfGuildIsInCreditsList(){
     if(credits.servers.some(obj => Object.keys(obj).includes(guildId))){
         console.log("credits.servers tem o serverid: " + guildId)
@@ -1357,14 +1555,6 @@ async function kick(){
     }else{
         praisethelord();
     }
-}
-
-const getApp =(guildId) => {
-    const app = client.api.applications(client.user.id)
-    if(this.guildId){
-        app.guilds(guildId)
-    }
-    return app
 }
 
 async function betSignupUser(memberId, memberName, value){
@@ -1744,6 +1934,14 @@ async function betEnd (memberId, memberName){
     return ("Congratulations you are the winner")
 }
 
+const getApp =(guildId) => {
+    const app = client.api.applications(client.user.id)
+    if(this.guildId){
+        app.guilds(guildId)
+    }
+    return app
+}
+
 function compare( a, b ) {
     if ( a.credits > b.credits ){
       return -1;
@@ -1758,4 +1956,14 @@ function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function getSoundClipsAsChoices(){
+    let choices = []
+    for (let i = 0; i < Object.keys(soundClips).length; i++) {
+        const soundClipName = Object.keys(soundClips)[i];
+        
+        choices.push({"name":soundClipName, 'value': soundClipName})
+    }
+    return choices
 }
