@@ -782,7 +782,12 @@ async function clip(interaction){
     }
 }
 
-async function soundclipUpload(interaction){   
+async function soundclipUpload(interaction){
+
+    if (Object.keys(soundClips).length == 25) {
+        return('This server already already has 25 soundclips. Please delete a soundclip before uploading another.');
+    }
+
     console.log(interaction.data.options[0].options)
     let options = interaction.data.options[0].options;
     
@@ -813,7 +818,51 @@ async function soundclipUpload(interaction){
         client.channels.cache.get(interaction.channel_id).send(interaction.member.user.username+ ` your soundclip has been uploaded! Feel free to use it. 👌`)
     })
 
-    return 'Your sound clip is being processed! Please wait a few seconds before using it. ⌛';
+    return 'Your sound clip is being processed! Please wait a few seconds before using it. ⏳';
+}
+
+async function soundclipEditVolume(interaction){   
+    console.log(interaction.data.options[0].options)
+    let options = interaction.data.options[0].options;
+    
+    let volume = options.find(option => option.name === 'volume') ? options.find(option => option.name === 'volume').value/100 : 1.0
+    let clipName = options.find(option => option.name === 'soundclip').value;
+
+
+    console.log(clipName, volume)
+
+
+    if(soundClips[clipName] == null){
+        return ('This server has no soundclips with this name...')
+    }
+
+    soundClips[clipName].volume = volume
+    await fs.writeFile('soundClips.mk2.json', JSON.stringify(soundClips, null, 4), (err) => {});
+
+    return 'Your sound clip is volume has been changed.';
+}
+
+async function soundclipDelete(interaction){
+
+    console.log(interaction.data.options[0].options)
+    let options = interaction.data.options[0].options;
+    
+    let clipName = options.find(option => option.name === 'soundclip').value;
+
+    console.log(clipName)
+
+    if(soundClips[clipName] == null){
+        return ('This server has no soundclips with this name...')
+    }
+
+    delete soundClips[clipName]
+    await fs.writeFile('soundClips.mk2.json', JSON.stringify(soundClips, null, 4), (err) => {});
+
+    registerSoundClipCommands(true).then((values) => {
+        client.channels.cache.get(interaction.channel_id).send(interaction.member.user.username+ ` your soundclip has been deleted! 🚮`)
+    })
+
+    return 'Your sound clip has been queued for deletion. Please wait a few seconds ⏳';
 }
 
 //processa slash commands
@@ -1148,6 +1197,19 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
                         }
                     }})
                 })
+            }else{
+                if(interaction.data.options[0].name === 'volume'){
+                    soundclipEditVolume(interaction).then( (resposta) => {
+                        console.log('resposta', resposta)
+            
+                        client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                            type: 4,
+                            data: {
+                              content: resposta
+                            }
+                        }})
+                    })
+                }
             }
         }
 
@@ -1486,10 +1548,10 @@ function registerSoundClipCommands(update = false){
         description: 'use and manage this server\'s customizable sound clip collection',
         options: [
             {
-            name: "upload",
-            description: "upload a custom sound clip",
-            type: 1,
-            options: [
+                name: "upload",
+                description: getUploadClipDescription(soundClipsChoices),
+                type: 1,
+                options: [
                     {
                         "name": "url",
                         "required": true,
@@ -1514,15 +1576,35 @@ function registerSoundClipCommands(update = false){
                 description: "delete a custom sound clip",
                 type: 1,
                 options: [
-                        {
-                            "name": "soundclip",
-                            "description": "play a custom sound clip",
-                            "type": 3,
-                            "required": true,
-                            "choices": soundClipsChoices,
-                        },
-                    ],
-                },
+                    {
+                        "name": "soundclip",
+                        "description": "play a custom sound clip",
+                        "type": 3,
+                        "required": true,
+                        "choices": soundClipsChoices,
+                    },
+                ],
+            },
+            {
+            name: "volume",
+                description: "change the volume of a previously uploaded sound clip",
+                type: 1,
+                options: [
+                    {
+                        "name": "soundclip",
+                        "description": "specify the clip's name",
+                        "type": 3,
+                        "required": true,
+                        "choices": soundClipsChoices,
+                    },
+                    {
+                        "name": "volume",
+                        "description": "specify the clip's new volume [10 - 200]%",
+                        "required": true,
+                        "type": 4,
+                    },
+                ],
+            },
         ],
     }})
     return Promise.all([promise1, promise2])
@@ -1966,4 +2048,8 @@ function getSoundClipsAsChoices(){
         choices.push({"name":soundClipName, 'value': soundClipName})
     }
     return choices
+}
+
+function getUploadClipDescription(soundClipsChoices){
+    return 'upload a custom soundclip (' + (25 - soundClipsChoices.length) + ' slots free)'
 }
