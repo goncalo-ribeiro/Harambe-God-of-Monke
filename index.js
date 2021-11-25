@@ -10,8 +10,8 @@ var auth = require('./auth.json');
 var guildId = auth.nvideaID;
 //var guildId = auth.tarasManiasID;
 
-var soundClipsOld = require('./soundClips.json');
-var soundClips = require('./soundClips.mk2.json');
+var heyClips = require('./heysoundClips.json');
+var soundClips = require('./soundClips.json');
 
 var credits = require('./credits.json');
 
@@ -56,6 +56,18 @@ client.on('ready', function (evt) {
     registerSlashCommands();
 });
 
+client.on('voiceStateUpdate', (oldState, newState) =>{
+
+    let userID = oldState.id;
+    
+    if(heyClips.hasOwnProperty(userID) && oldState.channelID === null && newState.channelID != null){
+        if(heyClips[userID].enabled){
+            console.log('playing ' + heyClips[userID].memberName + '\'s hey clip')
+            playHeyClip(userID, newState);
+        }   
+    }  
+} )
+
 client.on('message', message => {
     //console.log(message.author)
 	//console.log(`${message.author} in #${message.channel.name} sent: ${message.content}`);
@@ -89,6 +101,47 @@ client.on('message', message => {
         }
     }
 });
+
+async function playHeyClip(userID, voiceState){   
+    console.log('playHeyClip start', userID)
+
+    let youtubeRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/
+        link = heyClips[userID].link;
+        volume = heyClips[userID].volume;
+        regexResult = link.match(youtubeRegex)
+        console.log(regexResult)
+
+        try {
+            
+            var voiceChannel = voiceState.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                const streamOptions = { seek: 0, volume: volume };
+                let stream;
+
+                stream = (regexResult) ?  ytdl(link, { filter : 'audioonly' }) : link;
+                console.log(stream)
+                dispatcher = connection.play(stream, streamOptions);
+
+                dispatcher.on('start', () => {
+                    console.log('hey is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('hey has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('now playing ' + heyClips[userID].memberName + '\'s custom clip at ' + heyClips[userID].volume*100 + '% volume');
+            } 
+            return('you must be in a voice chat to play your sound clip');
+        } catch (error) {
+            console.log(error);
+            return('chamem o rick crl, nao era suposto chegar aqui');
+        }
+}
 
 async function kekeres(memberId){   
     console.log('kekeres start', memberId)
@@ -635,104 +688,63 @@ async function hey(interaction){
     let memberId = interaction.member.user.id;
     let memberName = interaction.member.user.username;
     let volume = 1.0;
+    let enabled = true;
     let link  = (Math.random() < 0.5) ? 'https://www.youtube.com/watch?v=u42au1R71yw' : 'https://www.youtube.com/watch?v=1JBMTcyp3hM' ;
-    let userWhoseClipIsGonnaBePlayed = memberId;
+    //let userWhoseClipIsGonnaBePlayed = memberId;
     let regexResult = 0;
 
-    let settingsChanged = false;
+    let linkSet = false;
+    let saveToFile = false;
 
     console.log('hey start', memberId, memberName)
 
-    if(soundClipsOld[memberId] == null){
-        soundClipsOld[memberId] = {}
-        soundClipsOld[memberId].memberName = memberName
-        soundClipsOld[memberId].link = link
-        soundClipsOld[memberId].volume = volume
-        await fs.writeFile('soundClips.json', JSON.stringify(soundClipsOld, null, 4), (err) => {});
+    if(heyClips[memberId] == null){
+        heyClips[memberId] = {}
+        heyClips[memberId].memberName = memberName
+        heyClips[memberId].enabled = enabled
+        heyClips[memberId].link = link
+        heyClips[memberId].volume = volume
+        saveToFile = true;
     }
     
     //console.log(interaction.data.options)
     if (interaction.data.options != undefined){
+        saveToFile = true;
 
         for (let i = 0; i < interaction.data.options.length; i++) {
             const option = interaction.data.options[i];
-            if(option.name === 'user'){
-                userWhoseClipIsGonnaBePlayed = option.value
-                console.log('userWhoseClipIsGonnaBePlayed', userWhoseClipIsGonnaBePlayed)
-            }
-        }
-        if(userWhoseClipIsGonnaBePlayed === memberId){
-            for (let i = 0; i < interaction.data.options.length; i++) {
-                const option = interaction.data.options[i];
-                if(option.name === 'link'){
-                    console.log('link = ', link)
-                    let urlRegExp = /^(ftp|http|https):\/\/[^ "]+$/
-                    regexResult = option.value.match(urlRegExp);
-                    if(regexResult){
-                        link = option.value;
-                        soundClipsOld[memberId].link = link
-                        settingsChanged = true;
-                    }else{
-                        return('please specify a valid url');
-                    }
-                }if(option.name === 'volume'){
-                    console.log('volume = ', volume)
-                    if((option.value >= 10) && (option.value <= 200)){
-                        volume = option.value / 100;
-                        soundClipsOld[memberId].volume = volume
-                        settingsChanged = true;
-                    }else{
-                        return('please specify a valid volume [10-200]');
-                    }
+            if(option.name === 'link'){
+                console.log('link = ', link)
+                let urlRegExp = /^(ftp|http|https):\/\/[^ "]+$/
+                regexResult = option.value.match(urlRegExp);
+                if(regexResult){
+                    link = option.value;
+                    heyClips[memberId].link = link
+                    linkSet = true;
+                }else{
+                    return('please specify a valid url');
+                }
+            }if(option.name === 'volume'){
+                console.log('volume = ', volume)
+                if((option.value >= 10) && (option.value <= 200)){
+                    volume = option.value / 100;
+                    heyClips[memberId].volume = volume
+                }else{
+                    return('please specify a valid volume [10-200]');
                 }
             }
-            console.log("write to file")
-            await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
-        }
-    }
-
-    let youtubeRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/
-    link = soundClipsOld[userWhoseClipIsGonnaBePlayed].link;
-    volume = soundClipsOld[userWhoseClipIsGonnaBePlayed].volume;
-    regexResult = link.match(youtubeRegex)
-    console.log(regexResult)
-
-    try {
-        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
-        if(voiceStates){
-            var voiceChannel = voiceStates.channel
-            if (voiceChannel) {
-                const connection = await voiceChannel.join();
-                const streamOptions = { seek: 0, volume: volume };
-                let stream;
-
-                stream = (regexResult) ?  ytdl(link, { filter : 'audioonly' }) : link;
-                console.log(stream)
-                dispatcher = connection.play(stream, streamOptions);
-
-                dispatcher.on('start', () => {
-                    console.log('hey is now playing!');
-                });
-        
-                dispatcher.on('finish', () => {
-                    console.log('hey has finished playing!');
-                    connection.disconnect();
-                });
-        
-                // Always remember to handle errors appropriately!
-                dispatcher.on('error', console.error);
-                return('now playing ' + soundClipsOld[userWhoseClipIsGonnaBePlayed].memberName + '\'s custom clip at ' + soundClipsOld[userWhoseClipIsGonnaBePlayed].volume*100 + '% volume');
+            if(option.name === 'enabled'){
+                enabled = option.value
+                heyClips[memberId].enabled = enabled
             }
         }
-        if (interaction.data.options != undefined){
-            if(settingsChanged)
-            return('settings changed successfully');    
-        }
-        return('you must be in a voice chat to play your sound clip');
-    } catch (error) {
-        console.log(error);
-        return('chamem o rick crl, nao era suposto chegar aqui');
     }
+    if(saveToFile){
+        console.log("write to file")
+        await fs.writeFile('heysoundClips.json', JSON.stringify(heyClips, null, 4), (err) => {});
+    }
+    let response = (linkSet) ? "Hey sound clip successfully set 👌" : 'Hey sound clip changes were saved 👌'
+    return response;
 }
 
 async function clip(interaction){
@@ -812,7 +824,7 @@ async function soundclipUpload(interaction){
     soundClips[clipName].url = clipUrl
     soundClips[clipName].volume = volume
     soundClips[clipName].uploader = interaction.member.user.username
-    await fs.writeFile('soundClips.mk2.json', JSON.stringify(soundClips, null, 4), (err) => {});
+    await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
 
     registerSoundClipCommands(true).then((values) => {
         client.channels.cache.get(interaction.channel_id).send(interaction.member.user.username+ ` your soundclip has been uploaded! Feel free to use it. 👌`)
@@ -837,7 +849,7 @@ async function soundclipEditVolume(interaction){
     }
 
     soundClips[clipName].volume = volume
-    await fs.writeFile('soundClips.mk2.json', JSON.stringify(soundClips, null, 4), (err) => {});
+    await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
 
     return 'Your sound clip is volume has been changed.';
 }
@@ -856,7 +868,7 @@ async function soundclipDelete(interaction){
     }
 
     delete soundClips[clipName]
-    await fs.writeFile('soundClips.mk2.json', JSON.stringify(soundClips, null, 4), (err) => {});
+    await fs.writeFile('soundClips.json', JSON.stringify(soundClips, null, 4), (err) => {});
 
     registerSoundClipCommands(true).then((values) => {
         client.channels.cache.get(interaction.channel_id).send(interaction.member.user.username+ ` your soundclip has been deleted! 🚮`)
@@ -1380,7 +1392,7 @@ function registerSlashCommands(){
         options: [
             {
                 "name": "link",
-                "description": "specify your custom sound clip",
+                "description": "specify your custom sound clip which will play whenever you enter voice channel",
                 "type": 3,
             },
             {
@@ -1389,9 +1401,9 @@ function registerSlashCommands(){
                 "type": 4,
             },
             {
-                "name": "user",
-                "description": "yoink the sound clip of another user",
-                "type": 6,
+                "name": "enabled",
+                "description": "enable or disable the sound clip from playing (default: TRUE)",
+                "type": 5,
             },
         ],
     }})
