@@ -683,6 +683,38 @@ async function emocionado(memberId){
     }
 }
 
+async function espetaculo(memberId){   
+    console.log('espetaculo start')
+    try {
+        var voiceStates = client.guilds.cache.get(guildId).voiceStates.cache.get(memberId);
+        if(voiceStates){
+            var voiceChannel = voiceStates.channel
+            if (voiceChannel) {
+                const connection = await voiceChannel.join();
+                // Create a dispatcher
+                const dispatcher = connection.play('audio/espetaculo.mp3', { volume: 1.5 });
+        
+                dispatcher.on('start', () => {
+                    console.log('espetaculo.mp3 is now playing!');
+                });
+        
+                dispatcher.on('finish', () => {
+                    console.log('espetaculo.mp3 has finished playing!');
+                    connection.disconnect();
+                });
+        
+                // Always remember to handle errors appropriately!
+                dispatcher.on('error', console.error);
+                return('ESHBETÁAAAAAAAAAAAACULO!');
+            }
+        }
+        return('ESHBETÁAAAAAAAAAAAACULO!');
+    } catch (error) {
+        console.log('catch error');
+        return('ESHBETÁAAAAAAAAAAAACULO!');
+    }
+}
+
 async function hey(interaction){   
 
     let memberId = interaction.member.user.id;
@@ -1152,6 +1184,22 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'espetaculo'){
+        console.log(interaction)
+        let interactionUserId = interaction.member.user.id;
+        espetaculo(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
     if (interaction.data.name === 'hey'){
         //console.log(interaction)
         hey(interaction).then( (resposta) => {
@@ -1383,6 +1431,10 @@ function registerSlashCommands(){
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
         name: 'emocionado',
         description: 'ouvi as palavras sábias do nuno melo'
+    }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'espetaculo',
+        description: 'ESHBETÁAAAAAAAAAAAACULO!'
     }})
 
     
