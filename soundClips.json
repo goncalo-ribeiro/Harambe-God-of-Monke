@@ -16,7 +16,7 @@
     },
     "Special Surprise": {
         "url": "https://cdn.discordapp.com/attachments/741306247222919218/896411841356517416/Special_Suprise.mp3",
-        "volume": 1,
+        "volume": 0.4,
         "uploader": "marcode3"
     },
     "What's up bitches?": {
@@ -72,6 +72,11 @@
     "Irasshaimase": {
         "url": "https://cdn.discordapp.com/attachments/741306247222919218/913179086388625459/Irasshaimase.mp3",
         "volume": 1.5,
+        "uploader": "rick_sanchez"
+    },
+    "vai dormir": {
+        "url": "https://cdn.discordapp.com/attachments/413817618076532737/927241666606280724/sueca_compressed_and_amplified.mp3",
+        "volume": 1,
         "uploader": "rick_sanchez"
     }
 }

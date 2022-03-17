@@ -2,7 +2,61 @@
     "255093821598203914": {
         "memberName": "rick_sanchez",
         "enabled": true,
-        "link": "https://www.youtube.com/watch?v=u42au1R71yw",
+        "link": "https://cdn.discordapp.com/attachments/434883051085103105/946175996858597496/Oh_sh_t_a_rat.mp3",
+        "volume": 1.1
+    },
+    "243807209778053120": {
+        "memberName": "Crazy",
+        "enabled": true,
+        "link": "https://www.youtube.com/watch?v=pYV4fi0g89A",
         "volume": 1
+    },
+    "218742629918048256": {
+        "memberName": "xqsme",
+        "enabled": true,
+        "link": "https://cdn.discordapp.com/attachments/440139336378351616/939241975981428776/Gato_Fedorento_-_O_Sotor_Sotor_Senhores_deputados_1.mp3",
+        "volume": 1
+    },
+    "351728755061817347": {
+        "memberName": "marcode3",
+        "enabled": true,
+        "link": "https://cdn.discordapp.com/attachments/741306247222919218/913508515493068800/oooh.mp3",
+        "volume": 1
+    },
+    "185777017147359233": {
+        "memberName": "cloro",
+        "enabled": true,
+        "link": "https://cdn.discordapp.com/attachments/741306247222919218/913532564596199464/angelvoice.mp3",
+        "volume": 0.6
+    },
+    "278175480631525377": {
+        "memberName": "GomesK",
+        "enabled": true,
+        "link": "https://www.youtube.com/watch?v=U5IP-dU1mrY&ab_channel=Cybrjollyshark",
+        "volume": 0.5
+    },
+    "462019665611325451": {
+        "memberName": "josesa",
+        "enabled": true,
+        "link": "https://www.youtube.com/watch?v=-J0v4tCPAao&ab_channel=SoundShack",
+        "volume": 1
+    },
+    "165837580913344512": {
+        "memberName": "Maroca",
+        "enabled": true,
+        "link": "https://www.youtube.com/watch?v=8URukvnUYTw",
+        "volume": 0.85
+    },
+    "163738323972521984": {
+        "memberName": "Gandini",
+        "enabled": true,
+        "link": "https://www.youtube.com/watch?v=_asNhzXq72w",
+        "volume": 0.8
+    },
+    "184057633257291777": {
+        "memberName": "SWarrior",
+        "enabled": true,
+        "link": "https://cdn.discordapp.com/attachments/946173929330978836/948350600268095518/HIS_NAME_IS_JOHN_CENA_1.mp3",
+        "volume": 0.8
     }
 }
