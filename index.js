@@ -30,6 +30,9 @@ let AAAA = [
     'https://cdn.discordapp.com/attachments/634432612794105866/883400979142311956/AAAA.mp4'
 ];
 
+let hotDDayChecker = null;
+let hotDDayDates = require('./hotDDates.json');
+
 client.once('ready', () => {
 	console.log('Ready!');
 });
@@ -54,6 +57,9 @@ client.on('ready', function (evt) {
 
     //UNCOMMENT
     registerSlashCommands();
+    //checka a cada 30 mins
+    hotDDayChecker = setInterval(checkHotDDate, 1800000);
+    checkHotDDate();
 });
 
 client.on('voiceStateUpdate', (oldState, newState) =>{
@@ -715,6 +721,16 @@ async function espetaculo(memberId){
     }
 }
 
+async function conspiracy(){   
+    console.log('conspiracy start')
+    try {
+        return("Harambe soars from the heavens to share his wisdom with you:```Don't let your mind be so open that your brain falls out, questioning authorities and questioning official narratives is really important. Just because we are questioning them though doesn't mean we are gonna accept a stupid explanation by someone with no formal background and with no idea of what they are talking about just because we are so desperate to contradict to the main narrative.```Harambe has spoken! 🙏")
+    } catch (error) {
+        //console.log(error)
+        return('Harambe is busy right now please try again later')
+    }
+}
+
 async function hey(interaction){   
 
     let memberId = interaction.member.user.id;
@@ -1200,6 +1216,23 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
     }
 
+    if (interaction.data.name === 'conspiracy'){
+        console.log(interaction)
+        let interactionUserId = interaction.member.user.id;
+        conspiracy(interactionUserId).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
+
+
     if (interaction.data.name === 'hey'){
         //console.log(interaction)
         hey(interaction).then( (resposta) => {
@@ -1436,6 +1469,11 @@ function registerSlashCommands(){
         name: 'espetaculo',
         description: 'ESHBETÁAAAAAAAAAAAACULO!'
     }})
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'conspiracy',
+        description: 'ask Harambe his opinion about conspiracy theories'
+    }})
+
 
     
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
@@ -2116,4 +2154,68 @@ function getSoundClipsAsChoices(){
 
 function getUploadClipDescription(soundClipsChoices){
     return 'upload a custom soundclip (' + (25 - soundClipsChoices.length) + ' slots free)'
+}
+
+function checkHotDDate(){
+    let currentDate = new Date();
+
+    currentUTCHour = currentDate.getUTCHours();
+    todaysDay = currentDate.getUTCDate();
+    todaysMonth = currentDate.getMonth() + 1;
+    todaysYear = currentDate.getFullYear();
+
+    let nextAiringEpisodeData = getNextAiringEpisode();
+    let nextAiringEpisode = nextAiringEpisodeData.nextAiringEpisode;
+
+    if (nextAiringEpisode == null){
+        console.log('the season has ended, clearing interval')
+        clearInterval(hotDDayChecker);
+        return null;
+    }
+    
+    if(
+        nextAiringEpisode.day == todaysDay &&
+        nextAiringEpisode.month == todaysMonth &&
+        nextAiringEpisode.year == todaysYear &&
+        currentUTCHour > 9
+    ){
+        console.log("new episode airing today! sending message...")
+        //test channel
+        //const channel = client.channels.cache.get('634432612794105866');
+        //movies channel
+        const channel = client.channels.cache.get('459097744083124225');
+        
+        channel.send('*O Harambe desce dos céus e transmite uma mensagem de grande importância*')
+            .then(() => {
+        console.log('cool, sending image');
+        channel.send('https://cdn.discordapp.com/attachments/459097744083124225/1018836724824162324/6t3ayv.jpg')
+            }).then(() => {
+        console.log('cool, pinging xqsme');
+        channel.send('<@218742629918048256> fazei o obséquio de disponibilizar o próximo episódio do Hot D no Plex 🙏\n*O Harambe despede-se e retorna aos céus*')
+            }).then(() => {
+        console.log('cool, cool, cool');
+            })
+            .catch(() => console.log('grrr') );
+        
+        hotDDayDates[nextAiringEpisodeData.nextAiringEpisodeNumber].aired = 1;
+        fs.writeFile('hotDDates.json', JSON.stringify(hotDDayDates, null, 4), (err) => {});
+        return 1;
+    }
+    else{   //episode not airing
+        console.log("there's no episode airing today")
+        return 0;
+    }
+}
+
+function getNextAiringEpisode(){
+    console.log('\nchecking next airing episode...')
+    for (const [key, value] of Object.entries(hotDDayDates)) {
+        console.log(`${key}: ${value.date}`);
+        if(!value.aired){
+            console.log('next airing episode found: ' + value.date);
+            return {"nextAiringEpisodeNumber": key, "nextAiringEpisode": value}
+        }
+    }
+    console.log('next airing episode not found!')
+    return null;
 }
