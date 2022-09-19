@@ -83,5 +83,15 @@
         "url": "https://www.youtube.com/watch?v=41llBu0c2fU",
         "volume": 1,
         "uploader": "Crazy"
+    },
+    "hino": {
+        "url": "https://cdn.discordapp.com/attachments/741306247222919218/968964552169508965/Y2Mate_mp3cut.net.mp3",
+        "volume": 1,
+        "uploader": "rick_sanchez"
+    },
+    "chico": {
+        "url": "https://www.youtube.com/watch?v=khuxYl9KWV0",
+        "volume": 1,
+        "uploader": "rick_sanchez"
     }
 }
