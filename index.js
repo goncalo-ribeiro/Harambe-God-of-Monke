@@ -2172,6 +2172,11 @@ function checkHotDDate(){
         clearInterval(hotDDayChecker);
         return null;
     }
+
+    console.log(nextAiringEpisode.day, todaysDay,
+        nextAiringEpisode.month, todaysMonth,
+        nextAiringEpisode.year, todaysYear,
+        currentUTCHour);
     
     if(
         nextAiringEpisode.day == todaysDay &&
