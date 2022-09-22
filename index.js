@@ -5,7 +5,6 @@ const slash = new Slash(client);
 const ytdl = require('ytdl-core');
 var fs = require('fs');
 
-
 var auth = require('./auth.json');
 var guildId = auth.nvideaID;
 //var guildId = auth.tarasManiasID;
@@ -24,14 +23,15 @@ let odds = {
     seventyPlus: {yes: 2.0, no: 4.0}
 };
 
+//Plex
+const EpisodeChecker = require('./episodeChecker.js');
+var episodeChecker;
+
 let AAAA = [
     'https://cdn.discordapp.com/attachments/634432612794105866/883400873819123712/AAAA.mp4',
     'https://cdn.discordapp.com/attachments/634432612794105866/883400947760525373/AAAA.mp4',
     'https://cdn.discordapp.com/attachments/634432612794105866/883400979142311956/AAAA.mp4'
 ];
-
-let hotDDayChecker = null;
-let hotDDayDates = require('./hotDDates.json');
 
 client.once('ready', () => {
 	console.log('Ready!');
@@ -57,9 +57,11 @@ client.on('ready', function (evt) {
 
     //UNCOMMENT
     registerSlashCommands();
-    //checka a cada 30 mins
-    hotDDayChecker = setInterval(checkHotDDate, 1800000);
-    checkHotDDate();
+
+    //setup do RSS checker
+    episodeChecker = new EpisodeChecker(client, 15);  // atualiza a cada 20 mins
+    //setupRSSChecker(30);
+    //setInterval(checkQueuedEpisodes, 60000);
 });
 
 client.on('voiceStateUpdate', (oldState, newState) =>{
@@ -2156,71 +2158,3 @@ function getUploadClipDescription(soundClipsChoices){
     return 'upload a custom soundclip (' + (25 - soundClipsChoices.length) + ' slots free)'
 }
 
-function checkHotDDate(){
-    let currentDate = new Date();
-
-    currentUTCHour = currentDate.getUTCHours();
-    todaysDay = currentDate.getUTCDate();
-    todaysMonth = currentDate.getMonth() + 1;
-    todaysYear = currentDate.getFullYear();
-
-    let nextAiringEpisodeData = getNextAiringEpisode();
-    let nextAiringEpisode = nextAiringEpisodeData.nextAiringEpisode;
-
-    if (nextAiringEpisode == null){
-        console.log('the season has ended, clearing interval')
-        clearInterval(hotDDayChecker);
-        return null;
-    }
-
-    console.log(nextAiringEpisode.day, todaysDay,
-        nextAiringEpisode.month, todaysMonth,
-        nextAiringEpisode.year, todaysYear,
-        currentUTCHour);
-    
-    if(
-        nextAiringEpisode.day == todaysDay &&
-        nextAiringEpisode.month == todaysMonth &&
-        nextAiringEpisode.year == todaysYear &&
-        currentUTCHour > 9
-    ){
-        console.log("new episode airing today! sending message...")
-        //test channel
-        //const channel = client.channels.cache.get('634432612794105866');
-        //movies channel
-        const channel = client.channels.cache.get('459097744083124225');
-        
-        channel.send('*O Harambe desce dos céus e transmite uma mensagem de grande importância*')
-            .then(() => {
-        console.log('cool, sending image');
-        channel.send('https://cdn.discordapp.com/attachments/459097744083124225/1018836724824162324/6t3ayv.jpg')
-            }).then(() => {
-        console.log('cool, pinging xqsme');
-        channel.send('<@218742629918048256> fazei o obséquio de disponibilizar o próximo episódio do Hot D no Plex 🙏\n*O Harambe despede-se e retorna aos céus*')
-            }).then(() => {
-        console.log('cool, cool, cool');
-            })
-            .catch(() => console.log('grrr') );
-        
-        hotDDayDates[nextAiringEpisodeData.nextAiringEpisodeNumber].aired = 1;
-        fs.writeFile('hotDDates.json', JSON.stringify(hotDDayDates, null, 4), (err) => {});
-        return 1;
-    }
-    else{   //episode not airing
-        console.log("there's no episode airing today")
-        return 0;
-    }
-}
-
-function getNextAiringEpisode(){
-    console.log('\nchecking next airing episode...')
-    for (const [key, value] of Object.entries(hotDDayDates)) {
-        console.log(`${key}: ${value.date}`);
-        if(!value.aired){
-            console.log('next airing episode found: ' + value.date);
-            return {"nextAiringEpisodeNumber": key, "nextAiringEpisode": value}
-        }
-    }
-    console.log('next airing episode not found!')
-    return null;
-}
