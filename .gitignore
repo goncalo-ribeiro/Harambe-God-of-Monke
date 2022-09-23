@@ -1,3 +1,6 @@
+#soundclips backup
+backup/
+
 #project
 auth.json
 resources
@@ -107,3 +110,4 @@ dist
 
 # TernJS port file
 .tern-port
+
