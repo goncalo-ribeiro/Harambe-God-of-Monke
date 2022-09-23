@@ -59,8 +59,10 @@ class EpisodeChecker{
         // o contexto muda no setTimeout daí a necessidade do arrow function
         // this.checkQueueIntervalId = setTimeout( () => {this.checkQueuedEpisodes(this)}, 3000);
         setTimeout( () => {
-            this.checkQueueInterval = setInterval(() => {this.checkQueuedEpisodes(this)}, this.refreshRate)
+            this.checkQueueInterval = setInterval(() => {this.checkQueuedEpisodes()}, this.refreshRate);
+            this.checkQueuedEpisodes();
         }, 20000);
+        
 
         console.log('EpisodeChecker built');
     }
@@ -80,10 +82,13 @@ class EpisodeChecker{
             let showName = null;
             try {
                 showName = item['tv:show_name']['#'];
+                
                 const regExS00E00 = /s(\d+)e(\d+)/i;
                 const regExArray = regExS00E00.exec(item['tv:raw_title']['#']);
                 // console.log(regExArray)
                 item.episode = regExArray[0]
+                
+                item.sentMessage = false;
             } catch (error) {
                 console.log('error accessing TV show name');
                 return 0;
@@ -140,7 +145,7 @@ class EpisodeChecker{
     
     sendDiscordMessage(){
         let processedResult = this.processEpisodeQueue();
-        // console.log(processedResult)
+        // console.log(processedResult.stringArray)
 
         //test channel
         // const channel = this.client.channels.cache.get('634432612794105866');
@@ -156,25 +161,36 @@ class EpisodeChecker{
         channel.send('*O Harambe desce dos céus e transmite uma mensagem de grande importância*')
         .then(() => {
             if(processedResult.hotD){
-                channel.send('https://cdn.discordapp.com/attachments/459097744083124225/1018836724824162324/6t3ayv.jpg')
+                channel.send('https://cdn.discordapp.com/attachments/634432612794105866/1022978632848789584/6uhfub.jpg')
             }
         }).then(() => {
             channel.send('Acabou de sair o próximo episódio ' + processedResult.stringArray[0] + processedResult.stringArray[1] + '\n*O Harambe despede-se e retorna aos céus*')
         }).then(() => {
-            queuedEpisodes = {};
+            // queuedEpisodes = {};
+            processedResult.newEpisodesArray.forEach(episode => {
+                console.log(episode, episode[Object.keys(episode)[0]])
+                queuedEpisodes[Object.keys(episode)[0]].sentMessage = true
+                // episode.sentMessage = true;
+            });
             fs.writeFileSync('queuedEpisodes.json', JSON.stringify(queuedEpisodes, null, 4));
             console.log('episode queue cleared');
-        }).catch(() => console.log('ca burro') );
+        }).catch((err) => console.log('ca burro', err) );
     }
 
     processEpisodeQueue(){
         let showNameArray = []
+        let newEpisodesArray = []
         
         for (const [key, value] of Object.entries(queuedEpisodes)) {
             // console.log(`${key}: ${value}`);
-            showNameArray.push(`${key}** (${value.episode})`)
+            console.log(value.sentMessage);
+            if (!value.sentMessage) {
+                let aux = {};
+                aux[key] = value
+                showNameArray.push(`${key}** (${value.episode})`)
+                newEpisodesArray.push(aux)
+            }
         }
-
         let hotD = false;
         let string1 = (showNameArray.length === 1 ? 'do seriado:\n' : 'dos seriados:\n'); //;
 
@@ -191,8 +207,8 @@ class EpisodeChecker{
             )
         }
 
-        // console.log(string1, string2)
-        return {"stringArray" : [string1, string2], "hotD": hotD};
+        console.log(string1, string2)
+        return {"stringArray" : [string1, string2], "hotD": hotD, "newEpisodesArray": newEpisodesArray};
     }
     
 }
