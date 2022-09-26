@@ -127,11 +127,20 @@ class EpisodeChecker{
 
     checkQueuedEpisodes(){
         console.log('checking Queued Episodes...')
-        let currentDate = new Date();
+
+        let newEpisodeAired = false
+        
+        for (const [key, value] of Object.entries(queuedEpisodes)) {
+            // console.log(`${key}: ${value}`);
+            if (!value.sentMessage) {
+                newEpisodeAired = true;
+                break;
+            }
+        }
 
         if (
-            // currentDate.getHours() >= 9 &&
-            Object.keys(queuedEpisodes).length > 0
+            // Object.keys(queuedEpisodes).length > 0
+            newEpisodeAired
         ){
             console.log('sending Discord Message')
             this.sendDiscordMessage();
