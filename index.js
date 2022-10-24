@@ -211,6 +211,17 @@ async function rift(interaction){
 
 }
 
+async function gameOfThrows(interaction){   
+    console.log('rift start')
+    let gameofthrows1 = client.emojis.cache.find(val => val.name === "gameofthrows1");
+    let gameofthrows2 = client.emojis.cache.find(val => val.name === "gameofthrows2");
+    
+    //await client.channels.cache.get(interaction.channel_id).send(`${teemo1}${teemo2}${teemo3}${bernhand}`)
+
+    return(`${gameofthrows1}${gameofthrows2}`)
+
+
+}
 
 async function dc(){   
     console.log('dc start')
@@ -1370,6 +1381,22 @@ client.ws.on('INTERACTION_CREATE', async interaction => {
         return;
 
     }
+
+    if (interaction.data.name === 'gameofthrows'){
+        console.log(interaction)
+        //let interactionUserId = interaction.member.user.id;
+        gameOfThrows(interaction).then( (resposta) => {
+            console.log('resposta', resposta)
+
+            client.api.interactions(interaction.id, interaction.token).callback.post({data: {
+                type: 4,
+                data: {
+                  content: resposta
+                }
+            }})
+        })
+        return;
+    }
 })
 
 //regista slash commands
@@ -1513,6 +1540,11 @@ function registerSlashCommands(){
                 "type": 5,
             },
         ],
+    }})
+
+    client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
+        name: 'gameofthrows',
+        description: 'Break in case of throw'
     }})
     /*
     client.api.applications(client.user.id).guilds(guildId).commands.post({data: {
