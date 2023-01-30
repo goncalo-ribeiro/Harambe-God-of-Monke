@@ -7,7 +7,7 @@ var fs = require('fs');
 
 var auth = require('./auth.json');
 var guildId = auth.nvideaID;
-//var guildId = auth.tarasManiasID;
+// var guildId = auth.tarasManiasID;
 
 var heyClips = require('./heysoundClips.json');
 var soundClips = require('./soundClips.json');
@@ -194,18 +194,29 @@ async function rift(interaction){
 
     let toxicBrosID = '796025696353779752'
     let riftBrosID = '707697021573791876'
-    let roleID = toxicBrosID;
+    let roleID = riftBrosID;
+    let map = 'Rift';
 
     console.log(interaction.data.options)
     if (interaction.data.options != undefined){
-        roleID = interaction.data.options[0].value ? riftBrosID : toxicBrosID;
-        console.log(roleID)
+        for (let i = 0; i < interaction.data.options.length; i++) {
+            const option = interaction.data.options[i];
+            switch (option.name) {
+                case 'aram':
+                    map = option.value ? 'Murder Bridge' : 'Rift';
+                    break;
+                case 'toxicbros':
+                    roleID = option.value ? toxicBrosID : riftBrosID;    
+                    break;
+            }
+        }
     }
+    console.log(roleID, map)
     
 //    await client.channels.cache.get(interaction.channel_id).send(`${role} the Rift calls...`)
     let role = client.guilds.cache.get(guildId).roles.cache.get(roleID);
 
-    client.channels.cache.get(interaction.channel_id).send(`${role} the Rift calls...`)
+    client.channels.cache.get(interaction.channel_id).send(`${role} the ${map} calls...`)
     return(`${teemo1}${teemo2}${teemo3}${bernhand}`)
 
 
@@ -1534,9 +1545,15 @@ function registerSlashCommands(){
         description: 'The Rift yearns for its tribute',
         options: [
             {
-                "name": "riftbros",
-                "value": "riftbros",
-                "description": "Summon all Rift Bros? (DEFAULT: FALSE)",
+                "name": "aram",
+                "value": "aram",
+                "description": "Fight over the Murder Bridge? (DEFAULT: FALSE)",
+                "type": 5,
+            },
+            {
+                "name": "toxicbros",
+                "value": "toxicbros",
+                "description": "Summon only the Toxic Bros? (DEFAULT: FALSE)",
                 "type": 5,
             },
         ],

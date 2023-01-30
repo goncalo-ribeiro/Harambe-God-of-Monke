@@ -16,7 +16,8 @@ let queuedEpisodes = require('./queuedEpisodes.json');
 const RSSfeedURLs = [
     'https://showrss.info/show/1586.rss',   //hotd
     'https://showrss.info/show/44.rss',     //rick and morty
-    'https://showrss.info/show/1593.rss'    //rings of power
+    'https://showrss.info/show/1593.rss',    //rings of power
+    'https://showrss.info/show/1647.rss'    //the last of us
 ]
 
 /*
@@ -172,6 +173,9 @@ class EpisodeChecker{
             if(processedResult.hotD){
                 channel.send('https://cdn.discordapp.com/attachments/634432612794105866/1022978632848789584/6uhfub.jpg')
             }
+            if(processedResult.lastOfUs){
+                channel.send('https://cdn.discordapp.com/attachments/634432612794105866/1069623551826604082/79akh8.jpg')
+            }
         }).then(() => {
             channel.send('Acabou de sair o próximo episódio ' + processedResult.stringArray[0] + processedResult.stringArray[1] + '\n*O Harambe despede-se e retorna aos céus*')
         }).then(() => {
@@ -200,6 +204,7 @@ class EpisodeChecker{
                 newEpisodesArray.push(aux)
             }
         }
+        let lastOfUs = false
         let hotD = false;
         let string1 = (showNameArray.length === 1 ? 'do seriado:\n' : 'dos seriados:\n'); //;
 
@@ -209,6 +214,7 @@ class EpisodeChecker{
             const showName = showNameArray[i];
             
             if (showName.includes("House of the Dragon")) hotD = true;
+            if (showName.includes("The Last of Us")) lastOfUs = true;
 
             string2 = ( (i == showNameArray.length - 1) ? //último elemento?
                 string2.concat('-**' + showName + '.') :
@@ -217,7 +223,7 @@ class EpisodeChecker{
         }
 
         console.log(string1, string2)
-        return {"stringArray" : [string1, string2], "hotD": hotD, "newEpisodesArray": newEpisodesArray};
+        return {"stringArray" : [string1, string2], "hotD": hotD, "lastOfUs": lastOfUs, "newEpisodesArray": newEpisodesArray};
     }
     
 }
